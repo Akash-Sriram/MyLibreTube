@@ -62,7 +62,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: "Latest Nightly Build (${{ env.RELEASE_TAG }})"
+          name: "${{ env.RELEASE_TAG }}"
           body: "Automated custom nightly build synced from upstream."
           make_latest: true
           files: LibreTube/app/build/outputs/apk/debug/*.apk
