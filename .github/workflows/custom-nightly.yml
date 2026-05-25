@@ -35,6 +35,16 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
 
+      - name: Generate Release Tag
+        run: |
+          echo "RELEASE_TAG=nightly-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Strip Debug Suffix & Inject Version
+        run: |
+          sed -i "s/applicationIdSuffix = \".debug\"//g" LibreTube/app/build.gradle.kts
+          sed -i "s/resValue(\"string\", \"app_name\", \"LibreTube Debug\")/resValue(\"string\", \"app_name\", \"LibreTube\")/g" LibreTube/app/build.gradle.kts
+          sed -i "s/versionName = .*/versionName = \"$RELEASE_TAG\"/g" LibreTube/app/build.gradle.kts
+
       - name: Compile Modified LibreTube
         run: |
           cd LibreTube
@@ -54,9 +64,6 @@ jobs:
           $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks ../../../../../../keystore.jks --ks-key-alias "$KEY_ALIAS" --ks-pass "pass:$KEYSTORE_PASSWORD" --key-pass "pass:$KEY_PASSWORD" aligned.apk
           mv aligned.apk "$APK"
 
-      - name: Generate Release Tag
-        run: |
-          echo "RELEASE_TAG=nightly-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
