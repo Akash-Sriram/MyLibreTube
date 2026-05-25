@@ -3,7 +3,7 @@ name: Custom Nightly Pipeline
 on:
   workflow_dispatch: # Allow manual triggers
   schedule:
-    - cron: "0 */6 * * *" # Runs every 6 hours automatically to check for upstream updates
+    - cron: "0 * * * *" # Runs every 1 hour
 
 jobs:
   build-and-release:
@@ -21,11 +21,28 @@ jobs:
       - name: Check for Upstream Updates
         id: check_updates
         run: |
+          # Get old commit
+          OLD_COMMIT=$(git submodule status LibreTube | awk '{print $1}' | sed 's/^+//' | sed 's/^-//')
+          
           git submodule update --remote --recursive
+          
           if git diff --quiet LibreTube; then
             echo "updated=false" >> $GITHUB_OUTPUT
+            echo "No upstream changes." > changelog.txt
           else
             echo "updated=true" >> $GITHUB_OUTPUT
+            NEW_COMMIT=$(git submodule status LibreTube | awk '{print $1}' | sed 's/^+//' | sed 's/^-//')
+            
+            # Generate Changelog
+            cd LibreTube
+            CHANGELOG=$(git log ${OLD_COMMIT}..${NEW_COMMIT} --oneline)
+            cd ..
+            
+            echo "## Upstream Changes" > changelog.txt
+            echo '```text' >> changelog.txt
+            echo "$CHANGELOG" >> changelog.txt
+            echo '```' >> changelog.txt
+            
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -am "Sync submodule with upstream LibreTube" || true
@@ -91,6 +108,6 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: "${{ env.RELEASE_TAG }}"
-          body: "Automated custom nightly build synced from upstream."
+          body_path: changelog.txt
           make_latest: true
           files: LibreTube/app/build/outputs/apk/debug/*.apk
