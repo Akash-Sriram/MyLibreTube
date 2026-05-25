@@ -42,11 +42,11 @@ jobs:
 
       - name: Sign APK
         id: sign_apk
-        uses: ilharp/sign-android-release@v1
+        uses: r0adkll/sign-android-release@v1
         with:
-          releaseDir: LibreTube/app/build/outputs/apk/debug
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          releaseDirectory: LibreTube/app/build/outputs/apk/debug
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
