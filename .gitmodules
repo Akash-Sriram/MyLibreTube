@@ -1,0 +1,3 @@
+[submodule "LibreTube"]
+	path = LibreTube
+	url = https://github.com/libre-tube/LibreTube.git

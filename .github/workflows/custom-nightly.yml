@@ -1,0 +1,63 @@
+name: Custom Nightly Pipeline
+
+on:
+  workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: "0 */6 * * *" # Runs every 6 hours automatically to check for upstream updates
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create GitHub Releases
+
+    steps:
+      - name: Checkout Repository & Submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # This pulls the LibreTube official code
+          fetch-depth: 0
+
+      - name: Apply Custom Patches
+        run: |
+          cd LibreTube
+          # Apply all patches from our patches directory directly onto the official codebase
+          for patch in ../patches/*.patch; do
+            git apply "$patch"
+          done
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "temurin"
+          cache: "gradle"
+
+      - name: Compile Modified LibreTube
+        run: |
+          cd LibreTube
+          ./gradlew assembleDebug
+
+      - name: Sign APK
+        id: sign_apk
+        uses: ilharp/sign-android-release@v1
+        with:
+          releaseDir: LibreTube/app/build/outputs/apk/debug
+          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
+          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Generate Release Tag
+        run: |
+          echo "RELEASE_TAG=nightly-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Latest Nightly Build (${{ env.RELEASE_TAG }})"
+          body: "Automated custom nightly build synced from upstream."
+          prerelease: true
+          make_latest: true
+          files: LibreTube/app/build/outputs/apk/debug/*.apk
