@@ -1,25 +1,24 @@
-# MyLibreTube (Custom CI Architecture)
+# MyLibreTube
 
-Welcome to your fully automated, self-updating custom fork of [LibreTube](https://github.com/libre-tube/LibreTube)!
+This is a custom, automated build of [LibreTube](https://github.com/libre-tube/LibreTube). 
 
-This repository uses a powerful, custom-built GitHub Actions pipeline to automatically pull the latest source code from the official LibreTube developers, inject custom modifications, and publish self-updating `.apk` builds directly to the **Releases** tab.
+This repository automatically syncs with the official LibreTube codebase and compiles a custom Android APK with an altered, self-hosted updater.
 
-## 🚀 Features
+## How it works
 
-* **100% Upstream Sync:** The codebase stays identical to the official LibreTube repo using Git Submodules. You always get the absolute latest features and bug fixes without dealing with upstream merge conflicts.
-* **True Auto-Updates:** The internal updater in the app has been meticulously patched to ping *this* repository's API instead of the official one. Every time a new nightly build compiles, your phone will silently download it in the background using Android's native Download Manager and prompt you to install it seamlessly.
-* **No `Debug` Aesthetics:** Although it builds on the `assembleDebug` profile, the pipeline actively scrubs out the `.debug` suffixes from the Package Name and App Name, meaning the app installs cleanly over the official stable app and looks identical in your app drawer.
-* **Intelligent Versioning:** Custom datestamps (e.g., `nightly-YYYYMMDD-HHMM`) are injected directly into the compiled app's `versionName`, bypassing LibreTube's Integer overflow bug and accurately tracking your personal builds.
+1. **Daily Syncing:** GitHub Dependabot is configured to check the official LibreTube repository for updates once a day. If it finds new commits, it automatically creates and merges a Pull Request updating the codebase.
+2. **Automated Build:** When the code is updated, a GitHub Action runs automatically. 
+3. **Custom Patches:** During the build, the Action applies several patches:
+   - Changes the in-app updater to check this repository's Releases page instead of the official one.
+   - Modifies the updater so it downloads the APK in the background using Android's DownloadManager, and then automatically prompts the user to install it.
+   - Removes the `.debug` name and package suffixes so the app installs cleanly over the official version.
+   - Replaces the version name with a custom timestamp.
+4. **Release:** The Action compiles the APK, signs it using a custom keystore, generates a changelog from the upstream commits, and publishes it to the Releases tab.
 
-## 🛠️ Modifications (Patches)
+## How to install
 
-The pipeline dynamically injects custom changes before compilation:
-1. **`001-updater-url.patch`**: Reroutes the app's built-in update checker to ping this repository's `/releases/latest` endpoint, effectively creating a completely private, self-hosted OTA (Over-The-Air) update network.
-2. **`002-UpdateAvailableDialog.patch` & `UpdateReceiver.kt`**: Rewrites the updater UI. Instead of forcing the user to open Google Chrome to download the update manually, this patch seamlessly triggers the Android `DownloadManager` in the background and automatically pops up the system package installer once the download completes!
-3. **Pipeline Injections**: Uses dynamic `sed` scripting to swap out buggy signing actions, fix long version integers, strip debug aliases, and hot-swap the app's version tracker.
+1. Go to the **Releases** tab on the right side of this page.
+2. Download the latest `app-debug.apk` file.
+3. Install it on your Android device.
 
-## 📦 Download
-
-To get started, simply head over to the **[Releases](../../releases)** tab on the right sidebar and download the latest `app-debug.apk`. 
-
-Install it once, and the app will automatically handle updating itself to all future nightly releases!
+Once installed, the app will check this repository for updates. When a new build is published, you will receive a prompt in the app to update automatically.
