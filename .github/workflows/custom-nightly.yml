@@ -40,16 +40,19 @@ jobs:
           cd LibreTube
           ./gradlew assembleDebug
 
-      - name: Sign APK
-        id: sign_apk
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: LibreTube/app/build/outputs/apk/debug
-          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 34.0.0
+      - name: Sign APK manually
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
+          cd LibreTube/app/build/outputs/apk/debug
+          APK=$(find . -name "*.apk" | head -n 1)
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -p -f -v 4 "$APK" aligned.apk
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks ../../../../../../keystore.jks --ks-key-alias "$KEY_ALIAS" --ks-pass "pass:$KEYSTORE_PASSWORD" --key-pass "pass:$KEY_PASSWORD" aligned.apk
+          mv aligned.apk "$APK"
 
       - name: Generate Release Tag
         run: |
