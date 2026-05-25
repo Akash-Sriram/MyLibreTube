@@ -2,8 +2,8 @@ name: Custom Nightly Pipeline
 
 on:
   workflow_dispatch: # Allow manual triggers
-  schedule:
-    - cron: "0 * * * *" # Runs every 1 hour
+  push:
+    branches: [ master ] # Instantly triggers when Dependabot merges new code!
 
 jobs:
   build-and-release:
@@ -18,41 +18,33 @@ jobs:
           submodules: recursive # This pulls the LibreTube official code
           fetch-depth: 0
 
-      - name: Check for Upstream Updates
-        id: check_updates
+      - name: Generate Changelog
         run: |
-          # Get old commit
-          OLD_COMMIT=$(git submodule status LibreTube | awk '{print $1}' | sed 's/^+//' | sed 's/^-//')
+          # Try to find the old and new submodule commit pointers
+          OLD_COMMIT=$(git ls-tree HEAD~1 LibreTube 2>/dev/null | awk '{print $3}' || echo "")
+          NEW_COMMIT=$(git ls-tree HEAD LibreTube 2>/dev/null | awk '{print $3}' || echo "")
           
-          git submodule update --remote --recursive
+          echo "## Upstream Changes" > changelog.txt
+          echo '```text' >> changelog.txt
           
-          if git diff --quiet LibreTube; then
-            echo "updated=false" >> $GITHUB_OUTPUT
-            echo "No upstream changes." > changelog.txt
-          else
-            echo "updated=true" >> $GITHUB_OUTPUT
-            NEW_COMMIT=$(git submodule status LibreTube | awk '{print $1}' | sed 's/^+//' | sed 's/^-//')
-            
-            # Generate Changelog
+          if [ -n "$OLD_COMMIT" ] && [ -n "$NEW_COMMIT" ] && [ "$OLD_COMMIT" != "$NEW_COMMIT" ]; then
             cd LibreTube
             CHANGELOG=$(git log ${OLD_COMMIT}..${NEW_COMMIT} --oneline)
             cd ..
-            
-            echo "## Upstream Changes" > changelog.txt
-            echo '```text' >> changelog.txt
             echo "$CHANGELOG" >> changelog.txt
-            echo '```' >> changelog.txt
-            
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -am "Sync submodule with upstream LibreTube" || true
-            git push || true
+          else
+            echo "Manual workflow trigger or internal pipeline update." >> changelog.txt
           fi
+          
+          echo '```' >> changelog.txt
 
       - name: Apply Custom Patches
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           sudo apt-get update && sudo apt-get install -y dos2unix
+          
+          # Inject custom source files missing from the official repo
+          cp patches/UpdateReceiver.kt LibreTube/app/src/main/java/com/github/libretube/util/UpdateReceiver.kt
+          
           cd LibreTube
           # Apply all patches from our patches directory directly onto the official codebase
           for patch in ../patches/*.patch; do
@@ -61,7 +53,6 @@ jobs:
           done
 
       - name: Set up JDK 17
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-java@v4
         with:
           java-version: 17
@@ -69,12 +60,10 @@ jobs:
           cache: "gradle"
 
       - name: Generate Release Tag
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           echo "RELEASE_TAG=nightly-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
       - name: Strip Debug Suffix & Inject Version
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           sed -i "s/applicationIdSuffix = \".debug\"//g" LibreTube/app/build.gradle.kts
           sed -i "s/resValue(\"string\", \"app_name\", \"LibreTube Debug\")/resValue(\"string\", \"app_name\", \"LibreTube\")/g" LibreTube/app/build.gradle.kts
@@ -82,13 +71,11 @@ jobs:
           sed -i "s/\.toInt()/\.toLong()/g" LibreTube/app/src/main/java/com/github/libretube/util/UpdateChecker.kt
 
       - name: Compile Modified LibreTube
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           cd LibreTube
           ./gradlew assembleDebug
 
       - name: Sign APK manually
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEY }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -103,7 +90,6 @@ jobs:
           mv aligned.apk "$APK"
 
       - name: Publish to GitHub Releases
-        if: steps.check_updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
