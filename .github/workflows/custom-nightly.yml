@@ -21,6 +21,7 @@ jobs:
       - name: Apply Custom Patches
         run: |
           sudo apt-get update && sudo apt-get install -y dos2unix
+          git submodule update --remote --recursive
           cd LibreTube
           # Apply all patches from our patches directory directly onto the official codebase
           for patch in ../patches/*.patch; do
