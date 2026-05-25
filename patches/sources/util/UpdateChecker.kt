@@ -18,12 +18,12 @@ import java.util.Locale
 
 class UpdateChecker(private val context: Context) {
     suspend fun checkUpdate(isManualCheck: Boolean = false) {
-        val currentAppVersion = BuildConfig.VERSION_NAME.filter { it.isDigit() }.toInt()
+        val currentAppVersion = BuildConfig.VERSION_NAME.filter { it.isDigit() }.toLongOrNull() ?: 0L
 
         try {
             val response = RetrofitInstance.externalApi.getLatestRelease()
             // version would be in the format "0.21.1"
-            val update = response.name.filter { it.isDigit() }.toInt()
+            val update = response.name.filter { it.isDigit() }.toLongOrNull() ?: 0L
             
             // Self-clean old updates on launch to save storage
             val oldApk = java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "LibreTube-Update.apk")
