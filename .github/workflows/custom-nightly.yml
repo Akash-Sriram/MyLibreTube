@@ -38,19 +38,21 @@ jobs:
           
           echo '```' >> changelog.txt
 
-      - name: Apply Custom Patches
+      - name: Inject Custom Source Files
         run: |
+          BASE="LibreTube/app/src/main/java/com/github/libretube"
+          
+          # Direct file copy — no patches, no encoding issues, always works
+          cp patches/sources/util/UpdateReceiver.kt        $BASE/util/UpdateReceiver.kt
+          cp patches/sources/util/UpdateChecker.kt         $BASE/util/UpdateChecker.kt
+          cp patches/sources/dialogs/UpdateAvailableDialog.kt $BASE/ui/dialogs/UpdateAvailableDialog.kt
+          cp patches/sources/obj/update/UpdateInfo.kt      $BASE/obj/update/UpdateInfo.kt
+          
+          # Apply only the URL patch (001) which is a small targeted patch on a different file
           sudo apt-get update && sudo apt-get install -y dos2unix
-          
-          # Inject custom source files missing from the official repo
-          cp patches/UpdateReceiver.kt LibreTube/app/src/main/java/com/github/libretube/util/UpdateReceiver.kt
-          
+          dos2unix patches/001-updater-url.patch
           cd LibreTube
-          # Apply all patches from our patches directory directly onto the official codebase
-          for patch in ../patches/*.patch; do
-            dos2unix "$patch"
-            git apply --ignore-whitespace "$patch"
-          done
+          git apply --ignore-whitespace ../patches/001-updater-url.patch
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -68,7 +70,6 @@ jobs:
           sed -i "s/applicationIdSuffix = \".debug\"//g" LibreTube/app/build.gradle.kts
           sed -i "s/resValue(\"string\", \"app_name\", \"LibreTube Debug\")/resValue(\"string\", \"app_name\", \"LibreTube\")/g" LibreTube/app/build.gradle.kts
           sed -i "s/versionName = .*/versionName = \"$RELEASE_TAG\"/g" LibreTube/app/build.gradle.kts
-          sed -i "s/\.toInt()/\.toLong()/g" LibreTube/app/src/main/java/com/github/libretube/util/UpdateChecker.kt
 
       - name: Compile Modified LibreTube
         run: |
