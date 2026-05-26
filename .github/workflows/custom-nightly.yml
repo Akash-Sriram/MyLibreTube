@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to create GitHub Releases
+      actions: write  # Needed to delete old workflow runs
 
     steps:
       - name: Checkout Repository & Submodule
@@ -101,3 +102,21 @@ jobs:
           body_path: changelog.txt
           make_latest: true
           files: LibreTube/app/build/outputs/apk/debug/*.apk
+
+      - name: Prune Old Releases and Action Runs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching releases..."
+          releases_to_delete=$(gh release list --json tagName -q '.[].tagName' --limit 100 | grep "^nightly-" | tail -n +4)
+          for release in $releases_to_delete; do
+            echo "Deleting old release: $release"
+            gh release delete "$release" --yes --cleanup-tag
+          done
+
+          echo "Fetching action runs..."
+          runs_to_delete=$(gh run list --workflow custom-nightly.yml --json databaseId -q '.[].databaseId' --limit 100 | tail -n +6)
+          for run_id in $runs_to_delete; do
+            echo "Deleting old action run: $run_id"
+            gh run delete "$run_id"
+          done
