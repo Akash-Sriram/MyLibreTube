@@ -34,6 +34,9 @@ class UpdateAvailableDialog : DialogFragment() {
                             setDescription("Downloading custom nightly build")
                             setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                             setDestinationInExternalFilesDir(requireContext(), android.os.Environment.DIRECTORY_DOWNLOADS, "LibreTube-Update.apk")
+                            setAllowedOverMetered(true)
+                            setAllowedOverRoaming(true)
+                            setAllowedNetworkTypes(android.app.DownloadManager.Request.NETWORK_WIFI or android.app.DownloadManager.Request.NETWORK_MOBILE)
                         }
                         val manager = requireContext().getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
                         manager.enqueue(request)
