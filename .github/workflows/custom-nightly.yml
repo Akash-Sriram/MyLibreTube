@@ -4,6 +4,8 @@ on:
   workflow_dispatch: # Allow manual triggers
   push:
     branches: [ master ] # Instantly triggers when Dependabot merges new code!
+  schedule:
+    - cron: '0 0 * * *' # Runs automatically daily at midnight UTC
 
 jobs:
   build-and-release:
