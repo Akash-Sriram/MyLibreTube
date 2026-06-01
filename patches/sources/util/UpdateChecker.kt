@@ -67,6 +67,8 @@ class UpdateChecker(private val context: Context) {
     private fun sanitizeChangelog(changelog: String): String {
         return changelog.substringBeforeLast("**Full Changelog**")
             .replace(Regex("in https://github\\.com/\\S+"), "")
+            .replace("```text", "")
+            .replace("```", "")
             .lines().joinToString("\n") { line ->
                 if (line.startsWith("##")) line.uppercase(Locale.ROOT) + " :" else line
             }
@@ -74,7 +76,9 @@ class UpdateChecker(private val context: Context) {
             .replace(">", "")
             .replace("*", "•")
             .lines()
-            .joinToString("\n") { it.trim() }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString("\n")
     }
 }
 
