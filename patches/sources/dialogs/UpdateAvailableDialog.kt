@@ -23,26 +23,82 @@ class UpdateAvailableDialog : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(permission), 101)
+            }
+        }
+
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.update_available)
             .setMessage(changelog)
             .setPositiveButton(R.string.download) { _, _ ->
-                releaseUrl?.let {
-                    if (it.endsWith(".apk", ignoreCase = true)) {
-                        val request = android.app.DownloadManager.Request(it.toUri()).apply {
-                            setTitle(getString(R.string.app_name) + " Update")
-                            setDescription("Downloading custom nightly build")
-                            setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            setDestinationInExternalFilesDir(requireContext(), android.os.Environment.DIRECTORY_DOWNLOADS, "LibreTube-Update.apk")
-                            setAllowedOverMetered(true)
-                            setAllowedOverRoaming(true)
-                            setAllowedNetworkTypes(android.app.DownloadManager.Request.NETWORK_WIFI or android.app.DownloadManager.Request.NETWORK_MOBILE)
-                        }
+                releaseUrl?.let { url ->
+                    if (url.endsWith(".apk", ignoreCase = true)) {
                         val manager = requireContext().getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
-                        manager.enqueue(request)
-                        android.widget.Toast.makeText(requireContext(), "Downloading update in background...", android.widget.Toast.LENGTH_LONG).show()
+                        var alreadyHandling = false
+                        
+                        // Check if already downloading or downloaded
+                        val query = android.app.DownloadManager.Query()
+                        val cursor = manager.query(query)
+                        if (cursor != null) {
+                            try {
+                                val uriIdx = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_URI)
+                                val statusIdx = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_STATUS)
+                                val idIdx = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_ID)
+                                
+                                if (uriIdx != -1 && statusIdx != -1 && idIdx != -1) {
+                                    while (cursor.moveToNext()) {
+                                        val downloadUrl = cursor.getString(uriIdx)
+                                        if (downloadUrl == url) {
+                                            val status = cursor.getInt(statusIdx)
+                                            if (status == android.app.DownloadManager.STATUS_SUCCESSFUL) {
+                                                val downloadId = cursor.getLong(idIdx)
+                                                val uri = manager.getUriForDownloadedFile(downloadId)
+                                                if (uri != null) {
+                                                    val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                                        setDataAndType(uri, "application/vnd.android.package-archive")
+                                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                    }
+                                                    try {
+                                                        requireContext().startActivity(installIntent)
+                                                    } catch (e: Exception) {
+                                                        android.widget.Toast.makeText(requireContext(), "Failed to launch installer", android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                                alreadyHandling = true
+                                                break
+                                            } else if (status == android.app.DownloadManager.STATUS_RUNNING || status == android.app.DownloadManager.STATUS_PENDING) {
+                                                android.widget.Toast.makeText(requireContext(), "Update download is already in progress...", android.widget.Toast.LENGTH_LONG).show()
+                                                alreadyHandling = true
+                                                break
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("UpdateDialog", "Error querying DownloadManager: $e")
+                            } finally {
+                                cursor.close()
+                            }
+                        }
+                        
+                        if (!alreadyHandling) {
+                            val request = android.app.DownloadManager.Request(url.toUri()).apply {
+                                setTitle(getString(R.string.app_name) + " Update")
+                                setDescription("Downloading custom nightly build")
+                                setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                setDestinationInExternalFilesDir(requireContext(), android.os.Environment.DIRECTORY_DOWNLOADS, "LibreTube-Update.apk")
+                                setAllowedOverMetered(true)
+                                setAllowedOverRoaming(true)
+                                setAllowedNetworkTypes(android.app.DownloadManager.Request.NETWORK_WIFI or android.app.DownloadManager.Request.NETWORK_MOBILE)
+                            }
+                            manager.enqueue(request)
+                            android.widget.Toast.makeText(requireContext(), "Downloading update in background...", android.widget.Toast.LENGTH_LONG).show()
+                        }
                     } else {
-                        startActivity(Intent(Intent.ACTION_VIEW, it.toUri()))
+                        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                     }
                 }
             }

@@ -26,8 +26,12 @@ class UpdateChecker(private val context: Context) {
             val update = response.name.filter { it.isDigit() }.toLongOrNull() ?: 0L
             
             // Self-clean old updates on launch to save storage
-            val oldApk = java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "LibreTube-Update.apk")
-            if (oldApk.exists()) oldApk.delete()
+            val downloadDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS)
+            downloadDir?.listFiles()?.forEach { file ->
+                if (file.name.startsWith("LibreTube-Update")) {
+                    file.delete()
+                }
+            }
 
             if (currentAppVersion != update) {
                 withContext(Dispatchers.Main) {
