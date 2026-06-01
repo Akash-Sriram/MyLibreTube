@@ -1,0 +1,62 @@
+diff --git a/app/src/main/java/com/github/libretube/repo/LocalPlaylistsRepository.kt b/app/src/main/java/com/github/libretube/repo/LocalPlaylistsRepository.kt
+index f79d99de5..6be92e621 100644
+--- a/app/src/main/java/com/github/libretube/repo/LocalPlaylistsRepository.kt
++++ b/app/src/main/java/com/github/libretube/repo/LocalPlaylistsRepository.kt
+@@ -10,6 +10,9 @@ import com.github.libretube.db.DatabaseHolder
+ import com.github.libretube.db.obj.LocalPlaylist
+ import com.github.libretube.extensions.parallelMap
+ import com.github.libretube.obj.PipedImportPlaylist
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.launch
+ 
+ class LocalPlaylistsRepository: PlaylistRepository {
+     override suspend fun getPlaylist(playlistId: String): Playlist {
+@@ -126,16 +129,37 @@ class LocalPlaylistsRepository: PlaylistRepository {
+         for (playlist in playlists) {
+             val playlistId = createPlaylist(playlist.name!!)
+ 
+-            // if not logged in, all video information needs to become fetched manually
+-            // Only do so with `MAX_CONCURRENT_IMPORT_CALLS` videos at once to prevent performance issues
+-            for (videoIdList in playlist.videos.chunked(MAX_CONCURRENT_IMPORT_CALLS)) {
+-                val streams = videoIdList.parallelMap {
+-                    runCatching { MediaServiceRepository.instance.getStreams(it) }
+-                        .getOrNull()
+-                        ?.toStreamItem(it)
+-                }.filterNotNull()
+-
+-                PlaylistsHelper.addToPlaylist(playlistId, *streams.toTypedArray())
++            // 1. Create offline placeholders instantly (Takes under 0.1s!)
++            val placeholders = playlist.videos.map { videoId ->
++                StreamItem(
++                    url = "/watch?v=$videoId",
++                    title = "Video $videoId",
++                    thumbnail = "",
++                    uploaderName = "Fetching details...",
++                    duration = 0L
++                )
++            }
++            PlaylistsHelper.addToPlaylist(playlistId, *placeholders.toTypedArray())
++
++            // 2. Fetch and enrich actual metadata quietly in the background (Non-blocking!)
++            CoroutineScope(Dispatchers.IO).launch {
++                for (videoIdList in playlist.videos.chunked(MAX_CONCURRENT_IMPORT_CALLS)) {
++                    val streams = videoIdList.parallelMap { videoId ->
++                        runCatching { MediaServiceRepository.instance.getStreams(videoId) }
++                            .getOrNull()
++                            ?.toStreamItem(videoId)
++                    }.filterNotNull()
++
++                    // Silently update database records with real metadata
++                    streams.forEach { stream ->
++                        val localItem = stream.toLocalPlaylistItem(playlistId)
++                        val existing = DatabaseHolder.Database.localPlaylistsDao().getPlaylistVideo(playlistId, localItem.videoId)
++                        if (existing != null) {
++                            localItem.id = existing.id
++                            DatabaseHolder.Database.localPlaylistsDao().updatePlaylistVideo(localItem)
++                        }
++                    }
++                }
+             }
+         }
+     }
