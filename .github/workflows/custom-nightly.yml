@@ -52,13 +52,15 @@ jobs:
           cp patches/sources/dialogs/UpdateAvailableDialog.kt $BASE/ui/dialogs/UpdateAvailableDialog.kt
           cp patches/sources/obj/update/UpdateInfo.kt      $BASE/obj/update/UpdateInfo.kt
           
-          # Apply patches (URL patch 001 and AndroidManifest patch 002)
+          # Apply patches (URL 001, AndroidManifest 002, BackupHelper 004)
           sudo apt-get update && sudo apt-get install -y dos2unix
           dos2unix patches/001-updater-url.patch
           dos2unix patches/002-updater-manifest.patch
+          dos2unix patches/004-backup-restore-fix.patch
           cd LibreTube
           git apply --ignore-whitespace ../patches/001-updater-url.patch
           git apply --ignore-whitespace ../patches/002-updater-manifest.patch
+          git apply --ignore-whitespace ../patches/004-backup-restore-fix.patch
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
