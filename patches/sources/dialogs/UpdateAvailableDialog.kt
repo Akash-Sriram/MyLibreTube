@@ -55,20 +55,33 @@ class UpdateAvailableDialog : DialogFragment() {
                                             val status = cursor.getInt(statusIdx)
                                             if (status == android.app.DownloadManager.STATUS_SUCCESSFUL) {
                                                 val downloadId = cursor.getLong(idIdx)
-                                                val uri = manager.getUriForDownloadedFile(downloadId)
-                                                if (uri != null) {
-                                                    val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                                                        setDataAndType(uri, "application/vnd.android.package-archive")
-                                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                                    }
-                                                    try {
-                                                        requireContext().startActivity(installIntent)
-                                                    } catch (e: Exception) {
-                                                        android.widget.Toast.makeText(requireContext(), "Failed to launch installer", android.widget.Toast.LENGTH_SHORT).show()
-                                                    }
+                                                val file = java.io.File(requireContext().getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "LibreTube-Update.apk")
+                                                val isValidApk = if (file.exists()) {
+                                                    requireContext().packageManager.getPackageArchiveInfo(file.absolutePath, 0) != null
+                                                } else {
+                                                    false
                                                 }
-                                                alreadyHandling = true
-                                                break
+
+                                                if (isValidApk) {
+                                                    val uri = manager.getUriForDownloadedFile(downloadId)
+                                                    if (uri != null) {
+                                                        val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                                            setDataAndType(uri, "application/vnd.android.package-archive")
+                                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                        }
+                                                        try {
+                                                            requireContext().startActivity(installIntent)
+                                                        } catch (e: Exception) {
+                                                            android.widget.Toast.makeText(requireContext(), "Failed to launch installer", android.widget.Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                    alreadyHandling = true
+                                                    break
+                                                } else {
+                                                    // File is corrupted or missing. Delete it and the DownloadManager record.
+                                                    if (file.exists()) file.delete()
+                                                    manager.remove(downloadId)
+                                                }
                                             } else if (status == android.app.DownloadManager.STATUS_RUNNING || status == android.app.DownloadManager.STATUS_PENDING) {
                                                 android.widget.Toast.makeText(requireContext(), "Update download is already in progress...", android.widget.Toast.LENGTH_LONG).show()
                                                 alreadyHandling = true
