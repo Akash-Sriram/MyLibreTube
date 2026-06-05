@@ -4,14 +4,10 @@ import com.github.libretube.api.obj.Subscription
 import com.github.libretube.constants.PreferenceKeys
 import com.github.libretube.db.obj.SubscriptionsFeedItem
 import com.github.libretube.helpers.PreferenceHelper
-import com.github.libretube.repo.AccountSubscriptionsRepository
 import com.github.libretube.repo.FeedProgress
 import com.github.libretube.repo.FeedRepository
 import com.github.libretube.repo.LocalFeedRepository
 import com.github.libretube.repo.LocalSubscriptionsRepository
-import com.github.libretube.repo.PipedAccountFeedRepository
-import com.github.libretube.repo.PipedLocalSubscriptionsRepository
-import com.github.libretube.repo.PipedNoAccountFeedRepository
 import com.github.libretube.repo.SubscriptionsRepository
 
 object SubscriptionHelper {
@@ -22,23 +18,12 @@ object SubscriptionHelper {
     const val GET_SUBSCRIPTIONS_LIMIT = 100
 
     private val localFeedExtraction
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.LOCAL_FEED_EXTRACTION,
-            true
-        )
-    private val token get() = PreferenceHelper.getToken()
+        get() = true
+    private val token get() = ""
     private val subscriptionsRepository: SubscriptionsRepository
-        get() = when {
-            token.isNotEmpty() -> AccountSubscriptionsRepository()
-            localFeedExtraction -> LocalSubscriptionsRepository()
-            else -> PipedLocalSubscriptionsRepository()
-        }
+        get() = LocalSubscriptionsRepository()
     private val feedRepository: FeedRepository
-        get() = when {
-            localFeedExtraction -> LocalFeedRepository()
-            token.isNotEmpty() -> PipedAccountFeedRepository()
-            else -> PipedNoAccountFeedRepository()
-        }
+        get() = LocalFeedRepository()
 
     suspend fun subscribe(
         channelId: String, name: String, uploaderAvatar: String?, verified: Boolean
