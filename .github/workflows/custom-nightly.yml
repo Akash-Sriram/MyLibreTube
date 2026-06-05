@@ -15,54 +15,18 @@ jobs:
       actions: write  # Needed to delete old workflow runs
 
     steps:
-      - name: Checkout Repository & Submodule
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive # This pulls the LibreTube official code
           fetch-depth: 0
 
       - name: Generate Changelog
         run: |
-          OLD_COMMIT=$(git ls-tree HEAD~1 LibreTube 2>/dev/null | awk '{print $3}' || echo "")
-          NEW_COMMIT=$(git ls-tree HEAD LibreTube 2>/dev/null | awk '{print $3}' || echo "")
-          
-          echo "## Upstream Changes" > changelog.txt
+          echo "## MyLibreTube Nightly Release" > changelog.txt
+          echo "Built from the latest hard-fork codebase." >> changelog.txt
           echo '```text' >> changelog.txt
-          
-          if [ -n "$OLD_COMMIT" ] && [ -n "$NEW_COMMIT" ] && [ "$OLD_COMMIT" != "$NEW_COMMIT" ]; then
-            cd LibreTube
-            # Fetch full history so old commits are available; ignore errors if not reachable
-            git fetch --unshallow 2>/dev/null || git fetch --depth=200 2>/dev/null || true
-            CHANGELOG=$(git log ${OLD_COMMIT}..${NEW_COMMIT} --oneline 2>/dev/null || echo "Upstream LibreTube updated.")
-            cd ..
-            echo "$CHANGELOG" >> changelog.txt
-          else
-            echo "Manual workflow trigger or internal pipeline update." >> changelog.txt
-          fi
-          
+          git log -n 10 --oneline >> changelog.txt
           echo '```' >> changelog.txt
-
-      - name: Inject Custom Source Files
-        run: |
-          BASE="LibreTube/app/src/main/java/com/github/libretube"
-          
-          # Direct file copy — no patches, no encoding issues, always works
-          cp patches/sources/util/UpdateReceiver.kt        $BASE/util/UpdateReceiver.kt
-          cp patches/sources/util/UpdateChecker.kt         $BASE/util/UpdateChecker.kt
-          cp patches/sources/dialogs/UpdateAvailableDialog.kt $BASE/ui/dialogs/UpdateAvailableDialog.kt
-          cp patches/sources/obj/update/UpdateInfo.kt      $BASE/obj/update/UpdateInfo.kt
-          
-          # Apply patches (URL 001, AndroidManifest 002, BackupHelper 004, PlaylistImport 005)
-          sudo apt-get update && sudo apt-get install -y dos2unix
-          dos2unix patches/001-updater-url.patch
-          dos2unix patches/002-updater-manifest.patch
-          dos2unix patches/004-backup-restore-fix.patch
-          dos2unix patches/005-fast-playlist-import.patch
-          cd LibreTube
-          git apply --ignore-whitespace ../patches/001-updater-url.patch
-          git apply --ignore-whitespace ../patches/002-updater-manifest.patch
-          git apply --ignore-whitespace ../patches/004-backup-restore-fix.patch
-          git apply --ignore-whitespace ../patches/005-fast-playlist-import.patch
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
