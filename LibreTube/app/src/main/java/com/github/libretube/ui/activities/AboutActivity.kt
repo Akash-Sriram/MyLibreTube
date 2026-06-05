@@ -109,11 +109,11 @@ class AboutActivity : BaseActivity() {
     }
 
     companion object {
-        const val DONATE_URL = "https://github.com/libre-tube/LibreTube#donate"
-        private const val WEBSITE_URL = "https://libretube.dev"
-        const val GITHUB_URL = "https://github.com/libre-tube/LibreTube"
-        private const val PIPED_GITHUB_URL = "https://github.com/TeamPiped/Piped"
-        private const val WEBLATE_URL = "https://hosted.weblate.org/projects/libretube/libretube/"
+        const val DONATE_URL = ""
+        private const val WEBSITE_URL = "https://github.com/Akash-Sriram/MyLibreTube"
+        const val GITHUB_URL = "https://github.com/Akash-Sriram/MyLibreTube"
+        private const val PIPED_GITHUB_URL = ""
+        private const val WEBLATE_URL = ""
         private const val LICENSE_URL = "https://gnu.org/"
     }
 }

@@ -23,6 +23,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/donate"
+            android:visibility="gone"
             style="@style/AboutCard">
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -56,6 +57,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/piped"
+            android:visibility="gone"
             style="@style/AboutCard">
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -67,6 +69,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/translate"
+            android:visibility="gone"
             style="@style/AboutCard">
 
             <androidx.appcompat.widget.AppCompatTextView

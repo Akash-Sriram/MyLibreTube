@@ -78,7 +78,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: "${{ env.RELEASE_TAG }}"
+          name: "MyLibreTube Nightly - ${{ env.RELEASE_TAG }}"
           body_path: changelog.txt
           make_latest: true
           files: LibreTube/app/build/outputs/apk/debug/*.apk
