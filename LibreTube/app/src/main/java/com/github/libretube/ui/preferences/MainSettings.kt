@@ -40,7 +40,6 @@ class MainSettings : BasePreferenceFragment() {
         
         listOf(
             "general" to R.id.action_global_generalSettings,
-            "instance" to R.id.action_global_instanceSettings,
             "appearance" to R.id.action_global_appearanceSettings,
             "sponsorblock" to R.id.action_global_sponsorBlockSettings,
             "player" to R.id.action_global_playerSettings,

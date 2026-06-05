@@ -152,9 +152,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             fetchHomeFeed()
         }
 
-        binding.changeInstance.setOnClickListener {
-            redirectToIntentSettings()
-        }
+        binding.changeInstance.isVisible = false
     }
 
     override fun onResume() {
@@ -185,7 +183,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             context = requireContext(),
             subscriptionsViewModel = subscriptionsViewModel,
             visibleItems = visibleItems,
-            onUnusualLoadTime = ::showChangeInstanceSnackBar
+            onUnusualLoadTime = {}
         )
     }
 
@@ -282,25 +280,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun showContent() {
         binding.nothingHere.isVisible = false
         binding.scroll.isVisible = true
-    }
-
-    private fun showChangeInstanceSnackBar() {
-        val root = _binding?.root ?: return
-        Snackbar
-            .make(root, R.string.suggest_change_instance, Snackbar.LENGTH_LONG)
-            .apply {
-                setAction(R.string.change) {
-                    redirectToIntentSettings()
-                }
-                show()
-            }
-    }
-
-    private fun redirectToIntentSettings() {
-        val settingsIntent = Intent(context, SettingsActivity::class.java).apply {
-            putExtra(SettingsActivity.REDIRECT_KEY, SettingsActivity.REDIRECT_TO_INTENT_SETTINGS)
-        }
-        startActivity(settingsIntent)
     }
 
     private fun makeVisible(vararg views: View) {
