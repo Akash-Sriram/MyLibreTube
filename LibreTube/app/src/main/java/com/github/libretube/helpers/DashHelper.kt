@@ -46,8 +46,8 @@ object DashHelper {
                 continue
             }
 
-            // ignore dual format and OTF streams
-            if (!stream.videoOnly!! || stream.indexEnd!! <= 0) {
+            // skip streams that are not video-only (dual format) or have no index data at all (true OTF)
+            if (stream.videoOnly != true || stream.indexEnd == null) {
                 continue
             }
 
@@ -175,10 +175,17 @@ object DashHelper {
 
     private fun createSegmentBaseElement(document: Document, stream: PipedStream): Element {
         val segmentBase = document.createElement("SegmentBase")
-        segmentBase.setAttribute("indexRange", "${stream.indexStart}-${stream.indexEnd}")
+
+        // Only set index range if valid data is present (indexEnd > 0)
+        if ((stream.indexEnd ?: 0) > 0) {
+            segmentBase.setAttribute("indexRange", "${stream.indexStart}-${stream.indexEnd}")
+        }
 
         val initialization = document.createElement("Initialization")
-        initialization.setAttribute("range", "${stream.initStart}-${stream.initEnd}")
+        // Only set init range if valid data is present
+        if ((stream.initEnd ?: 0) > 0) {
+            initialization.setAttribute("range", "${stream.initStart}-${stream.initEnd}")
+        }
         segmentBase.appendChild(initialization)
 
         return segmentBase
