@@ -51,8 +51,7 @@ object DashHelper {
                 continue
             }
 
-            // only unwraps the url if the preference is set in the settings
-            stream.url = ProxyHelper.rewriteUrlUsingProxyPreference(stream.url.orEmpty())
+            stream.url = stream.url.orEmpty()
 
             val adapSetInfo = adapSetInfos.find { it.mimeType == stream.mimeType }
             if (adapSetInfo != null) {
@@ -77,8 +76,7 @@ object DashHelper {
                 continue
             }
 
-            // only unwraps the url if the preference is set in the settings
-            stream.url = ProxyHelper.rewriteUrlUsingProxyPreference(stream.url.orEmpty())
+            stream.url = stream.url.orEmpty()
 
             adapSetInfos.add(
                 AdapSetInfo(

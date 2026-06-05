@@ -6,7 +6,6 @@ import com.github.libretube.db.obj.SubscriptionsFeedItem
 import com.github.libretube.db.obj.WatchHistoryItem
 import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.toLocalDate
-import com.github.libretube.helpers.ProxyHelper
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
@@ -36,10 +35,10 @@ data class StreamItem(
             playlistId = playlistId.toInt(),
             videoId = url!!.toID(),
             title = title,
-            thumbnailUrl = thumbnail?.let { ProxyHelper.unwrapUrl(it) },
+            thumbnailUrl = thumbnail,
             uploader = uploaderName,
             uploaderUrl = uploaderUrl,
-            uploaderAvatar = uploaderAvatar?.let { ProxyHelper.unwrapUrl(it) },
+            uploaderAvatar = uploaderAvatar,
             uploadDate = uploadedDate,
             duration = duration
         )
@@ -66,8 +65,8 @@ data class StreamItem(
         uploadDate = uploaded.toLocalDate(),
         uploader = uploaderName,
         uploaderUrl = uploaderUrl?.toID(),
-        uploaderAvatar = uploaderAvatar?.let { ProxyHelper.unwrapUrl(it) },
-        thumbnailUrl = thumbnail?.let { ProxyHelper.unwrapUrl(it) },
+        uploaderAvatar = uploaderAvatar,
+        thumbnailUrl = thumbnail,
         duration = duration
     )
 

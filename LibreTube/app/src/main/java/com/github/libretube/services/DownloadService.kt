@@ -45,7 +45,6 @@ import com.github.libretube.helpers.DownloadHelper.getNotificationId
 import com.github.libretube.helpers.ImageHelper
 import com.github.libretube.helpers.NetworkHelper
 import com.github.libretube.helpers.PlayerHelper
-import com.github.libretube.helpers.ProxyHelper
 import com.github.libretube.obj.DownloadStatus
 import com.github.libretube.parcelable.DownloadData
 import com.github.libretube.receivers.NotificationReceiver
@@ -236,7 +235,7 @@ class DownloadService : LifecycleService() {
                 try {
                     ImageHelper.downloadImage(
                         this@DownloadService,
-                        ProxyHelper.rewriteUrlUsingProxyPreference(thumbnailUrl),
+                        thumbnailUrl,
                         thumbnailTargetPath
                     )
                 } catch (e: Exception) {
@@ -257,7 +256,7 @@ class DownloadService : LifecycleService() {
         setResumeNotification(notificationBuilder, item)
 
         var totalRead = item.path.fileSize()
-        val url = URL(ProxyHelper.rewriteUrlUsingProxyPreference(item.url ?: return))
+        val url = URL(item.url ?: return)
 
         // only fetch the content length if it's not been returned by the API
         if (item.downloadSize <= 0L) {
