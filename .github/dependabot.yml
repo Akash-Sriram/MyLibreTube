@@ -4,6 +4,9 @@ updates:
     directory: "/LibreTube"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "org.jetbrains.kotlin.*"
+      - dependency-name: "com.google.devtools.ksp"
 
   - package-ecosystem: "github-actions"
     directory: "/"
