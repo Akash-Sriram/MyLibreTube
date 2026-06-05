@@ -41,10 +41,7 @@ class LibreTubeApp : Application() {
             existingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP
         )
 
-        /**
-         * Fetch the image proxy URL for local playlists and the watch history
-         */
-        ProxyHelper.fetchProxyUrl()
+
 
         /**
          * Handler for uncaught exceptions
