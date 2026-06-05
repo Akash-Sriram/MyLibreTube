@@ -103,10 +103,16 @@ class PoTokenGenerator : PoTokenProvider {
         return PoTokenResult(visitorData, poToken, poToken)
     }
 
-    override fun getWebEmbedClientPoToken(videoId: String?): PoTokenResult? = null
+    override fun getWebEmbedClientPoToken(videoId: String?): PoTokenResult? {
+        return videoId?.let { getWebClientPoToken(it) }
+    }
 
-    override fun getAndroidClientPoToken(videoId: String?): PoTokenResult? = null
+    override fun getAndroidClientPoToken(videoId: String?): PoTokenResult? {
+        return videoId?.let { getWebClientPoToken(it) }
+    }
 
-    override fun getIosClientPoToken(videoId: String?): PoTokenResult? = null
+    override fun getIosClientPoToken(videoId: String?): PoTokenResult? {
+        return videoId?.let { getWebClientPoToken(it) }
+    }
 }
 
