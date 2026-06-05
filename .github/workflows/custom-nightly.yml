@@ -22,11 +22,11 @@ jobs:
 
       - name: Generate Changelog
         run: |
-          echo "## MyLibreTube Nightly Release" > changelog.txt
-          echo "Built from the latest hard-fork codebase." >> changelog.txt
-          echo '```text' >> changelog.txt
-          git log -n 10 --oneline >> changelog.txt
-          echo '```' >> changelog.txt
+          echo "🚀 MyLibreTube Nightly Release" > changelog.txt
+          echo "Built from the latest codebase." >> changelog.txt
+          echo "" >> changelog.txt
+          echo "📋 Recent Changes:" >> changelog.txt
+          git log -n 10 --no-merges --format="• [%h] %s" >> changelog.txt
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
