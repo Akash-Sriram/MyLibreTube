@@ -41,9 +41,13 @@ jobs:
 
       - name: Sync NewPipeExtractor to Upstream Dev Commit
         run: |
-          LATEST_NPE_COMMIT=$(curl -s "https://api.github.com/repos/TeamNewPipe/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
-          echo "Syncing NewPipeExtractor to latest dev commit: $LATEST_NPE_COMMIT"
-          sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" LibreTube/gradle/libs.versions.toml
+          LATEST_NPE_COMMIT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/TeamNewPipe/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
+          if [ "$LATEST_NPE_COMMIT" != "null" ] && [ ! -z "$LATEST_NPE_COMMIT" ]; then
+            echo "Syncing NewPipeExtractor to latest dev commit: $LATEST_NPE_COMMIT"
+            sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" LibreTube/gradle/libs.versions.toml
+          else
+            echo "Failed to fetch latest commit from GitHub API, keeping pinned version"
+          fi
 
       - name: Strip Debug Suffix & Inject Version
         run: |
