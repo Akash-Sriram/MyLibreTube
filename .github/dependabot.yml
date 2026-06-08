@@ -6,8 +6,8 @@ updates:
     schedule:
       interval: "daily"
 
-  # Maintain Gradle dependencies in /LibreTube
+  # Maintain Gradle dependencies in the root directory
   - package-ecosystem: "gradle"
-    directory: "/LibreTube"
+    directory: "/"
     schedule:
       interval: "daily"
