@@ -90,8 +90,29 @@ jobs:
           done
 
           echo "Fetching action runs..."
-          runs_to_delete=$(gh run list --workflow build-release.yml --json databaseId -q '.[].databaseId' --limit 100 | tail -n +5)
+          runs_to_delete=$(gh run list --workflow build-release.yml --json databaseId -q '.[].databaseId' --limit 100 | tail -n +4)
           for run_id in $runs_to_delete; do
             echo "Deleting old action run: $run_id"
             gh run delete "$run_id"
           done
+
+  cleanup:
+    name: Purge All Old Runs (Manual Only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Delete All Old Workflow Runs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "Deleting ALL old runs except the 3 most recent..."
+          runs_to_delete=$(gh run list --workflow build-release.yml --json databaseId -q '.[].databaseId' --limit 200 | tail -n +4)
+          for run_id in $runs_to_delete; do
+            echo "Deleting run: $run_id"
+            gh run delete "$run_id" || true
+          done
+          echo "Done. Runs pruned to latest 3."
