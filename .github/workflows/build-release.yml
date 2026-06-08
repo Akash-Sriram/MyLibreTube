@@ -30,7 +30,7 @@ jobs:
           LATEST_NPE_COMMIT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/TeamNewPipe/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
           if [ "$LATEST_NPE_COMMIT" != "null" ] && [ ! -z "$LATEST_NPE_COMMIT" ]; then
             echo "Syncing NewPipeExtractor to latest dev commit: $LATEST_NPE_COMMIT"
-            sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" LibreTube/gradle/libs.versions.toml
+            sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" gradle/libs.versions.toml
           else
             echo "Failed to fetch latest commit from GitHub API, keeping pinned version"
           fi
@@ -38,10 +38,10 @@ jobs:
       - name: Strip Debug Suffix & Inject Custom Version
         run: |
           # Remove debug configurations to match release builds
-          sed -i 's/applicationIdSuffix = ".debug"//g' LibreTube/app/build.gradle.kts
-          sed -i 's/resValue("string", "app_name", "LibreTube Debug")/resValue("string", "app_name", "LibreTube")/g' LibreTube/app/build.gradle.kts
+          sed -i 's/applicationIdSuffix = ".debug"//g' app/build.gradle.kts
+          sed -i 's/resValue("string", "app_name", "LibreTube Debug")/resValue("string", "app_name", "LibreTube")/g' app/build.gradle.kts
           # Inject current release tag as versionName
-          sed -i "s/versionName = .*/versionName = \"$RELEASE_TAG\"/g" LibreTube/app/build.gradle.kts
+          sed -i "s/versionName = .*/versionName = \"$RELEASE_TAG\"/g" app/build.gradle.kts
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -52,7 +52,6 @@ jobs:
 
       - name: Compile Release APK
         run: |
-          cd LibreTube
           ./gradlew assembleRelease --no-daemon
 
       - name: Sign APK
