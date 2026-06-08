@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  # Maintain Gradle dependencies in /LibreTube
+  - package-ecosystem: "gradle"
+    directory: "/LibreTube"
+    schedule:
+      interval: "daily"
