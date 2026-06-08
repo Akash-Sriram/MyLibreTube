@@ -66,7 +66,7 @@ jobs:
 
       - name: Rename APK
         run: |
-          mv "${{ steps.sign.outputs.signedFile }}" "app-release.apk"
+          mv "${{ steps.sign.outputs.signedFile }}" "LibreTube-release.apk"
 
       - name: Generate Changelog
         run: |
@@ -83,7 +83,7 @@ jobs:
           name: "MyLibreTube Nightly - ${{ env.RELEASE_TAG }}"
           body_path: changelog.txt
           make_latest: true
-          files: "app-release.apk"
+          files: "LibreTube-release.apk"
           fail_on_unmatched_files: true
 
       - name: Prune Old Releases and Action Runs
