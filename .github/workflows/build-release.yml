@@ -1,5 +1,5 @@
 name: Custom Nightly Build & Release
-run-name: Build & Release - ${{ github.ref_name }} (Ref: ${{ github.sha }})
+run-name: Custom Nightly Build & Release Pipeline
 
 on:
   workflow_dispatch:
