@@ -58,7 +58,6 @@ import com.github.libretube.ui.models.SearchViewModel
 import com.github.libretube.ui.models.SubscriptionsViewModel
 import com.github.libretube.ui.preferences.BackupRestoreSettings
 import com.github.libretube.ui.preferences.BackupRestoreSettings.Companion.FILETYPE_ANY
-import com.github.libretube.util.UpdateChecker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -166,12 +165,6 @@ class MainActivity : AbstractPlayerHostActivity() {
             binding.root.scene.setTransition(transition)
         }
 
-        // Check update automatically
-        if (PreferenceHelper.getBoolean(PreferenceKeys.AUTOMATIC_UPDATE_CHECKS, false)) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                UpdateChecker(this@MainActivity).checkUpdate(false)
-            }
-        }
 
         // set the action bar for the activity
         setSupportActionBar(binding.toolbar)

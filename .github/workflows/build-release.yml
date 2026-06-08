@@ -68,20 +68,12 @@ jobs:
         run: |
           mv "${{ steps.sign.outputs.signedFile }}" "LibreTube-release.apk"
 
-      - name: Generate Changelog
-        run: |
-          echo "🚀 Custom Nightly Release - ${{ env.RELEASE_TAG }}" > changelog.txt
-          echo "Built with 100% original upstream logic." >> changelog.txt
-          echo "" >> changelog.txt
-          echo "📋 Recent Commits:" >> changelog.txt
-          git log -n 10 --no-merges --format="• [%h] %s" >> changelog.txt
-
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: "LibreTube Nightly - ${{ env.RELEASE_TAG }}"
-          body_path: changelog.txt
+          body: "Official release build of LibreTube compiled directly from upstream logic."
           make_latest: true
           files: "LibreTube-release.apk"
           fail_on_unmatched_files: true
