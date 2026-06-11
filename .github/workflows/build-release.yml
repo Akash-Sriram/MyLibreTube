@@ -27,7 +27,7 @@ jobs:
 
       - name: Sync NewPipeExtractor to Upstream Dev Commit
         run: |
-          LATEST_NPE_COMMIT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/TeamNewPipe/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
+          LATEST_NPE_COMMIT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/libre-tube/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
           if [ "$LATEST_NPE_COMMIT" != "null" ] && [ ! -z "$LATEST_NPE_COMMIT" ]; then
             echo "Syncing NewPipeExtractor to latest dev commit: $LATEST_NPE_COMMIT"
             sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" gradle/libs.versions.toml
