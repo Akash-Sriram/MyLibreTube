@@ -221,17 +221,43 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
         }
         return SearchResult(
             items = contentItems,
-            nextpage = null,
+            nextpage = if (contentItems.isNotEmpty()) "2" else null,
             suggestion = null,
             corrected = false
         )
     }
-
+ 
     override suspend fun getSearchResultsNextPage(
         searchQuery: String,
         filter: String,
         nextPage: String
-    ): SearchResult = SearchResult(emptyList(), null, null, false)
+    ): SearchResult {
+        val pageNum = nextPage.toIntOrNull() ?: 1
+        val contentItems = when (filter) {
+            "channels", "music_artists", "jiosaavn_artists" -> {
+                val response = api.searchArtists(query = searchQuery, page = pageNum)
+                response.results?.map { it.toContentItem() } ?: emptyList()
+            }
+            "playlists", "music_playlists", "jiosaavn_playlists" -> {
+                val response = api.searchPlaylists(query = searchQuery, page = pageNum)
+                response.results?.map { it.toContentItem() } ?: emptyList()
+            }
+            "music_albums", "jiosaavn_albums" -> {
+                val response = api.searchAlbums(query = searchQuery, page = pageNum)
+                response.results?.map { it.toContentItem() } ?: emptyList()
+            }
+            else -> {
+                val response = api.searchSongs(query = searchQuery, page = pageNum)
+                response.results?.map { it.toContentItem() } ?: emptyList()
+            }
+        }
+        return SearchResult(
+            items = contentItems,
+            nextpage = if (contentItems.isNotEmpty()) (pageNum + 1).toString() else null,
+            suggestion = null,
+            corrected = false
+        )
+    }
 
     override suspend fun getSuggestions(query: String): List<String> {
         val response = api.searchSongs(query = query, limit = 7)
