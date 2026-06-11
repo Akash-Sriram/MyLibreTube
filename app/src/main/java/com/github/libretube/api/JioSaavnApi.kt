@@ -180,4 +180,26 @@ interface JioSaavnApi {
         @Query("api_version") apiVersion: String = "4",
         @Query("ctx") ctx: String = "web6s"
     ): JioSaavnOfficialPlaylistResponse
+
+    @GET("api.php")
+    suspend fun getAlbumDetailsByToken(
+        @Query("__call") call: String = "webapi.get",
+        @Query("token") token: String,
+        @Query("type") type: String = "album",
+        @Query("_format") format: String = "json",
+        @Query("_marker") marker: String = "0",
+        @Query("api_version") apiVersion: String = "4",
+        @Query("ctx") ctx: String = "web6s"
+    ): JioSaavnOfficialAlbumResponse
+
+    @GET("api.php")
+    suspend fun getPlaylistDetailsByToken(
+        @Query("__call") call: String = "webapi.get",
+        @Query("token") token: String,
+        @Query("type") type: String = "playlist",
+        @Query("_format") format: String = "json",
+        @Query("_marker") marker: String = "0",
+        @Query("api_version") apiVersion: String = "4",
+        @Query("ctx") ctx: String = "web6s"
+    ): JioSaavnOfficialPlaylistResponse
 }

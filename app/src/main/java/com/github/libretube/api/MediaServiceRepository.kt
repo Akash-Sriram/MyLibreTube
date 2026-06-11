@@ -103,12 +103,7 @@ interface MediaServiceRepository {
             }
 
             private fun isJioSaavnFilter(filter: String): Boolean {
-                return filter == "all" || 
-                       filter == "music_songs" || 
-                       filter == "music_albums" || 
-                       filter == "music_playlists" || 
-                       filter == "music_artists" || 
-                       filter.contains("jiosaavn")
+                return filter.contains("jiosaavn")
             }
 
             override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {

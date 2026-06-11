@@ -297,9 +297,15 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
         var uploader = "JioSaavn"
         var songs = emptyList<JioSaavnOfficialSong>()
 
+        val isNumeric = cleanPlaylistId.all { it.isDigit() }
+
         if (isAlbum) {
             try {
-                val response = api.getAlbumDetails(albumId = cleanPlaylistId)
+                val response = if (isNumeric) {
+                    api.getAlbumDetails(albumId = cleanPlaylistId)
+                } else {
+                    api.getAlbumDetailsByToken(token = cleanPlaylistId)
+                }
                 title = response.title ?: response.name ?: title
                 description = "Album | Year: ${response.year ?: "Unknown"}"
                 thumbnail = response.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
@@ -310,7 +316,11 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
             }
         } else if (isPlaylist) {
             try {
-                val response = api.getPlaylistDetails(listId = cleanPlaylistId)
+                val response = if (isNumeric) {
+                    api.getPlaylistDetails(listId = cleanPlaylistId)
+                } else {
+                    api.getPlaylistDetailsByToken(token = cleanPlaylistId)
+                }
                 title = response.title ?: response.name ?: title
                 thumbnail = response.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
                 songs = response.list ?: emptyList()
@@ -318,7 +328,6 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
                 android.util.Log.e("JioSaavn", "Error getting playlist details for id: $cleanPlaylistId", e)
             }
         } else {
-            val isNumeric = cleanPlaylistId.all { it.isDigit() }
             if (isNumeric) {
                 try {
                     val response = api.getAlbumDetails(albumId = cleanPlaylistId)
@@ -340,12 +349,22 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
                 }
             } else {
                 try {
-                    val response = api.getPlaylistDetails(listId = cleanPlaylistId)
+                    val response = api.getAlbumDetailsByToken(token = cleanPlaylistId)
                     title = response.title ?: response.name ?: title
+                    description = "Album | Year: ${response.year ?: "Unknown"}"
                     thumbnail = response.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
-                    songs = response.list ?: emptyList()
+                    uploader = response.artist ?: response.primaryArtists ?: uploader
+                    songs = response.songs ?: emptyList()
                 } catch (e: Exception) {
-                    android.util.Log.e("JioSaavn", "Error getting playlist details (non-numeric fallback) for id: $cleanPlaylistId", e)
+                    android.util.Log.e("JioSaavn", "Error getting album details by token (non-numeric fallback) for id: $cleanPlaylistId", e)
+                    try {
+                        val response = api.getPlaylistDetailsByToken(token = cleanPlaylistId)
+                        title = response.title ?: response.name ?: title
+                        thumbnail = response.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
+                        songs = response.list ?: emptyList()
+                    } catch (pe: Exception) {
+                        android.util.Log.e("JioSaavn", "Error getting playlist details by token (non-numeric fallback) for id: $cleanPlaylistId", pe)
+                    }
                 }
             }
         }

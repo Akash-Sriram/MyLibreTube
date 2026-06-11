@@ -58,12 +58,6 @@ object PlaylistsHelper {
         if (type != PlaylistType.PUBLIC) {
             return playlistsRepository.getPlaylist(playlistId)
         }
-        val jiosaavnMode = true
-        // JioSaavn playlist/album IDs are either purely numeric or short alphanumeric tokens (e.g. TODtx4wo8yU_)
-        val isJioSaavnId = playlistId.length <= 15 && (!playlistId.isDigitsOnly() || jiosaavnMode)
-        if (isJioSaavnId) {
-            return JioSaavnMediaServiceRepository().getPlaylist(playlistId)
-        }
         return MediaServiceRepository.instance.getPlaylist(playlistId)
     }
 
