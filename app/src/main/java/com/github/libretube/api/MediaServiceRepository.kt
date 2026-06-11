@@ -43,8 +43,121 @@ interface MediaServiceRepository {
     suspend fun getPlaylistNextPage(playlistId: String, nextPage: String): Playlist
 
     companion object {
-        val instance: MediaServiceRepository
-            get() = JioSaavnMediaServiceRepository()
+        private val jioSaavnRepo = JioSaavnMediaServiceRepository()
+        private val youtubeRepo: MediaServiceRepository
+            get() = when {
+                PlayerHelper.fullLocalMode -> NewPipeMediaServiceRepository()
+                PlayerHelper.localStreamExtraction -> LocalStreamsExtractionPipedMediaServiceRepository()
+                else -> PipedMediaServiceRepository()
+            }
+
+        val instance: MediaServiceRepository = object : MediaServiceRepository {
+            override fun getTrendingCategories(): List<TrendingCategory> =
+                youtubeRepo.getTrendingCategories()
+
+            override suspend fun getTrending(region: String, category: TrendingCategory): List<StreamItem> =
+                youtubeRepo.getTrending(region, category)
+
+            override suspend fun getStreams(videoId: String): Streams {
+                return if (com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)) {
+                    jioSaavnRepo.getStreams(videoId)
+                } else {
+                    youtubeRepo.getStreams(videoId)
+                }
+            }
+
+            override suspend fun getComments(videoId: String): CommentsPage {
+                return if (com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)) {
+                    jioSaavnRepo.getComments(videoId)
+                } else {
+                    youtubeRepo.getComments(videoId)
+                }
+            }
+
+            override suspend fun getSegments(
+                videoId: String,
+                category: List<String>,
+                actionType: List<String>?
+            ): SegmentData {
+                return if (com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)) {
+                    jioSaavnRepo.getSegments(videoId, category, actionType)
+                } else {
+                    youtubeRepo.getSegments(videoId, category, actionType)
+                }
+            }
+
+            override suspend fun getDeArrowContent(videoId: String): DeArrowContent? {
+                return if (com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)) {
+                    jioSaavnRepo.getDeArrowContent(videoId)
+                } else {
+                    youtubeRepo.getDeArrowContent(videoId)
+                }
+            }
+
+            override suspend fun getCommentsNextPage(videoId: String, nextPage: String): CommentsPage {
+                return if (com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)) {
+                    jioSaavnRepo.getCommentsNextPage(videoId, nextPage)
+                } else {
+                    youtubeRepo.getCommentsNextPage(videoId, nextPage)
+                }
+            }
+
+            override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
+                return if (filter.contains("jiosaavn")) {
+                    jioSaavnRepo.getSearchResults(searchQuery, filter)
+                } else {
+                    youtubeRepo.getSearchResults(searchQuery, filter)
+                }
+            }
+
+            override suspend fun getSearchResultsNextPage(
+                searchQuery: String,
+                filter: String,
+                nextPage: String
+            ): SearchResult {
+                return if (filter.contains("jiosaavn")) {
+                    jioSaavnRepo.getSearchResultsNextPage(searchQuery, filter, nextPage)
+                } else {
+                    youtubeRepo.getSearchResultsNextPage(searchQuery, filter, nextPage)
+                }
+            }
+
+            override suspend fun getSuggestions(query: String): List<String> =
+                youtubeRepo.getSuggestions(query)
+
+            override suspend fun getChannel(channelId: String): Channel {
+                return if (channelId.length <= 15) {
+                    jioSaavnRepo.getChannel(channelId)
+                } else {
+                    youtubeRepo.getChannel(channelId)
+                }
+            }
+
+            override suspend fun getChannelTab(data: String, nextPage: String?): ChannelTabResponse =
+                youtubeRepo.getChannelTab(data, nextPage)
+
+            override suspend fun getChannelByName(channelName: String): Channel =
+                youtubeRepo.getChannelByName(channelName)
+
+            override suspend fun getChannelNextPage(channelId: String, nextPage: String): Channel =
+                youtubeRepo.getChannelNextPage(channelId, nextPage)
+
+            override suspend fun getPlaylist(playlistId: String): Playlist {
+                return if (playlistId.startsWith("jsa_")) {
+                    jioSaavnRepo.getPlaylist(playlistId)
+                } else {
+                    youtubeRepo.getPlaylist(playlistId)
+                }
+            }
+
+            override suspend fun getPlaylistNextPage(playlistId: String, nextPage: String): Playlist {
+                return if (playlistId.startsWith("jsa_")) {
+                    jioSaavnRepo.getPlaylistNextPage(playlistId, nextPage)
+                } else {
+                    youtubeRepo.getPlaylistNextPage(playlistId, nextPage)
+                }
+            }
+        }
     }
 }
 

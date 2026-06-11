@@ -10,7 +10,8 @@ import com.github.libretube.extensions.toID
 object JioSaavnHelper {
     
     fun isJioSaavn(videoId: String?, isOffline: Boolean): Boolean {
-        return videoId != null && !isOffline
+        if (videoId == null || isOffline) return false
+        return videoId.toID().length != 11
     }
 
     fun setupAudioOnlyThumbnail(playerBackgroundBinding: CustomExoPlayerViewTemplateBinding, streams: Streams) {
