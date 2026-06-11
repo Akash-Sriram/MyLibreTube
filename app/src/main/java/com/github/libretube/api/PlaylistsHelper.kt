@@ -55,24 +55,16 @@ object PlaylistsHelper {
         }
         // load locally stored playlists with the auth api
         val type = getPlaylistType(playlistId)
+        if (type != PlaylistType.PUBLIC) {
+            return playlistsRepository.getPlaylist(playlistId)
+        }
         val jiosaavnMode = true
         // JioSaavn playlist/album IDs are either purely numeric or short alphanumeric tokens (e.g. TODtx4wo8yU_)
         val isJioSaavnId = playlistId.length <= 15 && (!playlistId.isDigitsOnly() || jiosaavnMode)
-        if (type == PlaylistType.PUBLIC && isJioSaavnId) {
+        if (isJioSaavnId) {
             return JioSaavnMediaServiceRepository().getPlaylist(playlistId)
         }
-        if (jiosaavnMode && playlistId.isDigitsOnly()) {
-            // Try fetching from JioSaavn first, fall back to local database if not found
-            return runCatching {
-                JioSaavnMediaServiceRepository().getPlaylist(playlistId)
-            }.getOrElse {
-                playlistsRepository.getPlaylist(playlistId)
-            }
-        }
-        return when (type) {
-            PlaylistType.PUBLIC -> MediaServiceRepository.instance.getPlaylist(playlistId)
-            else -> playlistsRepository.getPlaylist(playlistId)
-        }
+        return MediaServiceRepository.instance.getPlaylist(playlistId)
     }
 
     suspend fun getAllPlaylistsWithVideos(playlistIds: List<String>? = null): List<Playlist> {
