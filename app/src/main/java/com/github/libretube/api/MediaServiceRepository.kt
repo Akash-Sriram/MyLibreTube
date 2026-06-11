@@ -102,8 +102,17 @@ interface MediaServiceRepository {
                 }
             }
 
+            private fun isJioSaavnFilter(filter: String): Boolean {
+                return filter == "all" || 
+                       filter == "music_songs" || 
+                       filter == "music_albums" || 
+                       filter == "music_playlists" || 
+                       filter == "music_artists" || 
+                       filter.contains("jiosaavn")
+            }
+
             override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
-                return if (filter.contains("jiosaavn")) {
+                return if (isJioSaavnFilter(filter)) {
                     jioSaavnRepo.getSearchResults(searchQuery, filter)
                 } else {
                     youtubeRepo.getSearchResults(searchQuery, filter)
@@ -115,7 +124,7 @@ interface MediaServiceRepository {
                 filter: String,
                 nextPage: String
             ): SearchResult {
-                return if (filter.contains("jiosaavn")) {
+                return if (isJioSaavnFilter(filter)) {
                     jioSaavnRepo.getSearchResultsNextPage(searchQuery, filter, nextPage)
                 } else {
                     youtubeRepo.getSearchResultsNextPage(searchQuery, filter, nextPage)

@@ -203,19 +203,19 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
         val contentItems = when (filter) {
             "channels", "music_artists", "jiosaavn_artists" -> {
-                val response = api.searchArtists(query = searchQuery)
+                val response = api.searchArtists(query = searchQuery, limit = 30, page = 1)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             "playlists", "music_playlists", "jiosaavn_playlists" -> {
-                val response = api.searchPlaylists(query = searchQuery)
+                val response = api.searchPlaylists(query = searchQuery, limit = 30, page = 1)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             "music_albums", "jiosaavn_albums" -> {
-                val response = api.searchAlbums(query = searchQuery)
+                val response = api.searchAlbums(query = searchQuery, limit = 30, page = 1)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             else -> {
-                val response = api.searchSongs(query = searchQuery)
+                val response = api.searchSongs(query = searchQuery, limit = 30, page = 1)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
         }
@@ -235,19 +235,19 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
         val pageNum = nextPage.toIntOrNull() ?: 1
         val contentItems = when (filter) {
             "channels", "music_artists", "jiosaavn_artists" -> {
-                val response = api.searchArtists(query = searchQuery, page = pageNum)
+                val response = api.searchArtists(query = searchQuery, limit = 30, page = pageNum)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             "playlists", "music_playlists", "jiosaavn_playlists" -> {
-                val response = api.searchPlaylists(query = searchQuery, page = pageNum)
+                val response = api.searchPlaylists(query = searchQuery, limit = 30, page = pageNum)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             "music_albums", "jiosaavn_albums" -> {
-                val response = api.searchAlbums(query = searchQuery, page = pageNum)
+                val response = api.searchAlbums(query = searchQuery, limit = 30, page = pageNum)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
             else -> {
-                val response = api.searchSongs(query = searchQuery, page = pageNum)
+                val response = api.searchSongs(query = searchQuery, limit = 30, page = pageNum)
                 response.results?.map { it.toContentItem() } ?: emptyList()
             }
         }
@@ -260,7 +260,7 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     }
 
     override suspend fun getSuggestions(query: String): List<String> {
-        val response = api.searchSongs(query = query, limit = 7)
+        val response = api.searchSongs(query = query, limit = 7, page = 1)
         return response.results?.mapNotNull { it.title } ?: emptyList()
     }
 
