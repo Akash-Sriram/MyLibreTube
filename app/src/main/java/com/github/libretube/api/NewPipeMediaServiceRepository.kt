@@ -276,6 +276,9 @@ class NewPipeMediaServiceRepository : MediaServiceRepository {
     }
 
     override suspend fun getStreams(videoId: String): Streams = withContext(Dispatchers.IO) {
+        if (videoId.length != 11) {
+            return@withContext JioSaavnMediaServiceRepository().getStreams(videoId)
+        }
         val respAsync = async {
             StreamInfo.getInfo("$YOUTUBE_FRONTEND_URL/watch?v=$videoId")
         }
@@ -379,6 +382,9 @@ class NewPipeMediaServiceRepository : MediaServiceRepository {
         }
 
     override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
+        if (filter.startsWith("jiosaavn")) {
+            return JioSaavnMediaServiceRepository().getSearchResults(searchQuery, filter)
+        }
         val queryHandler = NewPipeExtractorInstance.extractor.searchQHFactory.fromQuery(
             searchQuery,
             listOf(filter),

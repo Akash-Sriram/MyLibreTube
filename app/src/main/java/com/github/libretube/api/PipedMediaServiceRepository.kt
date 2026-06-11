@@ -22,6 +22,9 @@ open class PipedMediaServiceRepository : MediaServiceRepository {
         api.getTrending(region)
 
     override suspend fun getStreams(videoId: String): Streams {
+        if (videoId.length != 11) {
+            return JioSaavnMediaServiceRepository().getStreams(videoId)
+        }
         return try {
             api.getStreams(videoId).also {
                 it.isShort = it.videoStreams.firstOrNull()?.let { stream ->
@@ -56,8 +59,12 @@ open class PipedMediaServiceRepository : MediaServiceRepository {
     override suspend fun getCommentsNextPage(videoId: String, nextPage: String): CommentsPage =
         api.getCommentsNextPage(videoId, nextPage)
 
-    override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult =
-        api.getSearchResults(searchQuery, filter)
+    override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
+        if (filter.startsWith("jiosaavn")) {
+            return JioSaavnMediaServiceRepository().getSearchResults(searchQuery, filter)
+        }
+        return api.getSearchResults(searchQuery, filter)
+    }
 
     override suspend fun getSearchResultsNextPage(
         searchQuery: String,

@@ -49,8 +49,27 @@ object PlaylistsHelper {
     }
 
     suspend fun getPlaylist(playlistId: String): Playlist {
+        // JioSaavn search results prefix album IDs with "jsa_" to distinguish them from local playlists
+        if (playlistId.startsWith("jsa_")) {
+            return JioSaavnMediaServiceRepository().getPlaylist(playlistId)
+        }
         // load locally stored playlists with the auth api
-        return when (getPlaylistType(playlistId)) {
+        val type = getPlaylistType(playlistId)
+        val jiosaavnMode = true
+        // JioSaavn playlist/album IDs are either purely numeric or short alphanumeric tokens (e.g. TODtx4wo8yU_)
+        val isJioSaavnId = playlistId.length <= 15 && (!playlistId.isDigitsOnly() || jiosaavnMode)
+        if (type == PlaylistType.PUBLIC && isJioSaavnId) {
+            return JioSaavnMediaServiceRepository().getPlaylist(playlistId)
+        }
+        if (jiosaavnMode && playlistId.isDigitsOnly()) {
+            // Try fetching from JioSaavn first, fall back to local database if not found
+            return runCatching {
+                JioSaavnMediaServiceRepository().getPlaylist(playlistId)
+            }.getOrElse {
+                playlistsRepository.getPlaylist(playlistId)
+            }
+        }
+        return when (type) {
             PlaylistType.PUBLIC -> MediaServiceRepository.instance.getPlaylist(playlistId)
             else -> playlistsRepository.getPlaylist(playlistId)
         }
@@ -92,6 +111,8 @@ object PlaylistsHelper {
     }
 
     fun getPlaylistType(playlistId: String): PlaylistType {
+        // JioSaavn search results prefix album IDs with "jsa_" - always treat as PUBLIC
+        if (playlistId.startsWith("jsa_")) return PlaylistType.PUBLIC
         return if (playlistId.isDigitsOnly()) {
             PlaylistType.LOCAL
         } else if (playlistId.matches(pipedPlaylistRegex)) {

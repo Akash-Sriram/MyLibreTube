@@ -41,6 +41,7 @@ object PreferenceKeys {
     const val LOGIN_REGISTER = "login_register"
     const val LOGOUT = "logout"
     const val DELETE_ACCOUNT = "delete_account"
+    const val JIOSAAVN_MODE = "jiosaavn_mode"
 
     // Player behavior
     const val AUTO_FULLSCREEN = "auto_fullscreen"

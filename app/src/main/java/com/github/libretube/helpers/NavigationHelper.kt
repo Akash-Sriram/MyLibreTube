@@ -55,6 +55,9 @@ object NavigationHelper {
         forceVideo: Boolean = false,
         audioOnlyPlayerRequested: Boolean = false,
     ) {
+        val isJioSaavn = JioSaavnHelper.isJioSaavn(playerData.videoId, playerData.isOffline)
+        val finalAudioOnlyPlayerRequested = audioOnlyPlayerRequested || isJioSaavn
+
         // attempt to attach to the current media session first by using the corresponding
         // video/audio player instance
         val activity = ContextHelper.unwrapActivity<AbstractPlayerHostActivity>(context)
@@ -67,7 +70,7 @@ object NavigationHelper {
                 PlayingQueue.clearAfterCurrent()
                 this.playNextVideo(playerData.videoId.toID())
 
-                if (audioOnlyPlayerRequested) {
+                if (finalAudioOnlyPlayerRequested) {
                     // switch to audio only player
                     this.switchToAudioMode()
                 } else {
@@ -83,7 +86,7 @@ object NavigationHelper {
         }
         if (attachedToRunningPlayer) return
 
-        val audioOnlyMode = PreferenceHelper.getBoolean(PreferenceKeys.AUDIO_ONLY_MODE, false)
+        val audioOnlyMode = PreferenceHelper.getBoolean(PreferenceKeys.AUDIO_ONLY_MODE, false) || isJioSaavn
         val attachedToRunningAudioPlayer = activity.runOnAudioPlayerFragment {
             // can only continue using player if in same mode (online/offline)
             // otherwise, recreate the player
@@ -92,7 +95,7 @@ object NavigationHelper {
             PlayingQueue.clearAfterCurrent()
             this.playNextVideo(playerData.videoId.toID())
 
-            if (!audioOnlyPlayerRequested && !audioOnlyMode) {
+            if (!finalAudioOnlyPlayerRequested && !audioOnlyMode) {
                 // switch to video only player
                 this.switchToVideoMode(playerData.videoId.toID())
             } else {
@@ -104,12 +107,12 @@ object NavigationHelper {
         }
         if (attachedToRunningAudioPlayer) return
 
-        if (audioOnlyPlayerRequested || (audioOnlyMode && !forceVideo)) {
+        if (finalAudioOnlyPlayerRequested || (audioOnlyMode && !forceVideo)) {
             // in contrast to the video player, the audio player doesn't start a media service on
             // its own!
             BackgroundHelper.playOnBackground(context, playerData)
 
-            openAudioPlayerFragment(context, offlinePlayer = playerData.isOffline, minimizeByDefault = true)
+            openAudioPlayerFragment(context, offlinePlayer = playerData.isOffline, minimizeByDefault = !isJioSaavn)
         } else {
             openVideoPlayerFragment(
                 context,

@@ -16,6 +16,7 @@ fun String.toID(): String {
         .replace("/watch?v=", "") // videos
         .replace("/channel/", "") // channels
         .replace("/playlist?list=", "") // playlists
+        .replace("/watch/", "") // JioSaavn watch/song paths
         // channel urls for different categories than the main one
         .removeSuffix("/shorts")
         .removeSuffix("/streams")

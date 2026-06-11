@@ -76,6 +76,7 @@ import com.github.libretube.helpers.ImageHelper
 import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.PlayerHelper
 import com.github.libretube.helpers.PlayerHelper.getCurrentSegment
+import com.github.libretube.helpers.JioSaavnHelper
 import com.github.libretube.helpers.ThemeHelper
 import com.github.libretube.helpers.WindowHelper
 import com.github.libretube.obj.ShareData
@@ -1062,6 +1063,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
         // hide the button to skip SponsorBlock segments manually
         playerBackgroundBinding.sbSkipBtn.isGone = true
 
+        JioSaavnHelper.resetPlayerDefaults(playerBackgroundBinding)
+
         // use the video's default audio track when starting playback
         playerController.sendCustomCommand(
             AbstractPlayerService.runPlayerActionCommand, bundleOf(
@@ -1129,6 +1132,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             useController = false
             player = playerController
         }
+
+        JioSaavnHelper.setupAudioOnlyThumbnail(playerBackgroundBinding, streams)
 
         if (binding.playerMotionLayout.progress != 1.0f) {
             // show controllers when not in picture in picture mode

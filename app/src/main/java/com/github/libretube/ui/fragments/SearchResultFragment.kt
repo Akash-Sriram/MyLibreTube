@@ -49,8 +49,14 @@ class SearchResultFragment : DynamicLayoutManagerFragment(R.layout.fragment_sear
         // different queries in a row and navigating to the previous ones through back presses
         mainActivity.setQuerySilent(args.query)
 
+        val timeStamp = args.query.toHttpUrlOrNull()?.queryParameter("t")?.toTimeInSeconds()
+        val searchResultsAdapter = SearchResultsAdapter(timeStamp ?: 0)
+        binding.searchRecycler.adapter = searchResultsAdapter
+
         // filter options
         binding.filterChipGroup.setOnCheckedStateChangeListener { _, _ ->
+            // Clear existing list elements before querying new filter search results to ensure immediate UI transition
+            searchResultsAdapter.submitData(lifecycle, androidx.paging.PagingData.empty<com.github.libretube.api.obj.ContentItem>())
             viewModel.setFilter(
                 when (
                     binding.filterChipGroup.checkedChipId
@@ -64,14 +70,14 @@ class SearchResultFragment : DynamicLayoutManagerFragment(R.layout.fragment_sear
                     R.id.chip_music_albums -> "music_albums"
                     R.id.chip_music_playlists -> "music_playlists"
                     R.id.chip_music_artists -> "music_artists"
+                    R.id.chip_jiosaavn -> "jiosaavn"
+                    R.id.chip_jiosaavn_albums -> "jiosaavn_albums"
+                    R.id.chip_jiosaavn_artists -> "jiosaavn_artists"
+                    R.id.chip_jiosaavn_playlists -> "jiosaavn_playlists"
                     else -> throw IllegalArgumentException("Filter out of range")
                 }
             )
         }
-
-        val timeStamp = args.query.toHttpUrlOrNull()?.queryParameter("t")?.toTimeInSeconds()
-        val searchResultsAdapter = SearchResultsAdapter(timeStamp ?: 0)
-        binding.searchRecycler.adapter = searchResultsAdapter
 
         binding.searchRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -85,7 +91,7 @@ class SearchResultFragment : DynamicLayoutManagerFragment(R.layout.fragment_sear
                 searchResultsAdapter.loadStateFlow.collect {
                     val isLoading = it.source.refresh is LoadState.Loading
                     binding.progress.isVisible = isLoading
-                    binding.searchResultsLayout.isGone = isLoading
+                    binding.searchRecycler.isGone = isLoading
                 }
             }
         }

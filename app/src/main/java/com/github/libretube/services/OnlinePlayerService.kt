@@ -17,15 +17,18 @@ import com.github.libretube.api.SubscriptionHelper
 import com.github.libretube.api.obj.Segment
 import com.github.libretube.api.obj.Streams
 import com.github.libretube.constants.IntentData
+import com.github.libretube.constants.PreferenceKeys
 import com.github.libretube.db.DatabaseHelper
 import com.github.libretube.extensions.TAG
 import com.github.libretube.extensions.parcelable
 import com.github.libretube.extensions.setMetadata
+import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.toastFromMainDispatcher
 import com.github.libretube.extensions.toastFromMainThread
 import com.github.libretube.extensions.updateParameters
 import com.github.libretube.helpers.PlayerHelper
 import com.github.libretube.helpers.PlayerHelper.getSubtitleRoleFlags
+import com.github.libretube.helpers.PreferenceHelper
 import com.github.libretube.helpers.ProxyHelper
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.util.DeArrowUtil
@@ -101,7 +104,9 @@ open class OnlinePlayerService : AbstractPlayerService() {
         isAudioOnlyPlayer = args.getBoolean(IntentData.audioOnly)
 
         // get the intent arguments
-        videoId = playerData.videoId!!
+        // call toID() to strip any URL path prefix (e.g. /watch?v=, /watch/)
+        // since the adapter may pass the full item.url instead of a bare videoId
+        videoId = playerData.videoId!!.toID()
         playlistId = playerData.playlistId
         channelId = playerData.channelId
         startTimestampSeconds = playerData.timestamp
@@ -253,6 +258,22 @@ open class OnlinePlayerService : AbstractPlayerService() {
 
                 exoPlayer?.setMediaSource(mediaSource)
                 return
+            }
+            // Progressive audio fallback (e.g. JioSaavn progressive audio streams)
+            streams.audioStreams.isNotEmpty() -> {
+                val audioStream = streams.audioStreams.first()
+                val isJioSaavn = true
+                val audioUri = if (isJioSaavn) {
+                    audioStream.url.orEmpty().toUri()
+                } else {
+                    ProxyHelper.rewriteUrlUsingProxyPreference(audioStream.url.orEmpty()).toUri()
+                }
+                val mediaItem = createMediaItem(
+                    audioUri,
+                    audioStream.mimeType ?: MimeTypes.AUDIO_UNKNOWN,
+                    streams
+                )
+                exoPlayer?.setMediaItem(mediaItem)
             }
             // NO STREAM FOUND
             else -> {

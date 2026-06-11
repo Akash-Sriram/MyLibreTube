@@ -19,10 +19,22 @@ import kotlinx.coroutines.flow.flatMapLatest
 class SearchResultViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val args = SearchResultFragmentArgs.fromSavedStateHandle(savedStateHandle)
 
-    // parse search URLs from YouTube entered in the search bar
-    private val searchQuery = TextUtils.getVideoIdFromUri(args.query.toUri())?.let { videoId ->
-        "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=$videoId"
-    } ?: args.query
+    // parse search URLs from YouTube or JioSaavn entered in the search bar
+    private val searchQuery = run {
+        val uri = args.query.toUri()
+        val host = uri.host.orEmpty()
+        if (host.contains("jiosaavn.com")) {
+            val lastSegment = uri.lastPathSegment
+            val type = uri.pathSegments.getOrNull(0)
+            if (lastSegment != null && (type == "album" || type == "featured")) {
+                // Return just the ID so the playlist repository handles it as a JioSaavn query
+                return@run lastSegment
+            }
+        }
+        TextUtils.getVideoIdFromUri(uri)?.let { videoId ->
+            "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=$videoId"
+        } ?: args.query
+    }
 
     private val filterMutableData = MutableStateFlow("all")
 

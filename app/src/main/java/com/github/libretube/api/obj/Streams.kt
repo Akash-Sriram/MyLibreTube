@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 @Parcelize
 data class Streams(
     var title: String,
-    val description: String,
+    val description: String = "",
 
     @Serializable(SafeInstantSerializer::class)
     @SerialName("uploadDate")
@@ -24,19 +24,19 @@ data class Streams(
     val uploadTimestamp: Instant? = null,
     val uploaded: Long? = null,
 
-    val uploader: String,
-    val uploaderUrl: String?,
+    val uploader: String = "",
+    val uploaderUrl: String? = null,
     val uploaderAvatar: String? = null,
-    var thumbnailUrl: String,
-    val category: String,
+    var thumbnailUrl: String = "",
+    val category: String = "",
     val license: String = "YouTube licence",
     val visibility: String = "public",
     val tags: List<String> = emptyList(),
     val metaInfo: List<MetaInfo> = emptyList(),
     val hls: String? = null,
     val dash: String? = null,
-    val uploaderVerified: Boolean,
-    val duration: Long,
+    val uploaderVerified: Boolean = false,
+    val duration: Long = 0,
     val views: Long = 0,
     val likes: Long = 0,
     val dislikes: Long = 0,

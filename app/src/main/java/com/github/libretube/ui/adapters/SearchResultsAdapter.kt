@@ -43,7 +43,7 @@ class SearchResultsAdapter(
 ) : PagingDataAdapter<ContentItem, SearchViewHolder>(
     DiffUtilItemCallback(
         areItemsTheSame = { oldItem, newItem -> oldItem.url == newItem.url },
-        areContentsTheSame = { _, _ -> true },
+        areContentsTheSame = { oldItem, newItem -> oldItem == newItem },
     )
 ) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchViewHolder {

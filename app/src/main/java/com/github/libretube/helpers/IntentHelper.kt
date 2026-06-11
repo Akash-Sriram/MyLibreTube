@@ -57,8 +57,28 @@ object IntentHelper {
      * Resolve the uri and return a bundle with the arguments
      */
     fun resolveType(intent: Intent, uri: Uri) = with(intent) {
+        val host = uri.host.orEmpty()
+        val pathSegments = uri.pathSegments
         val lastSegment = uri.lastPathSegment
-        val secondLastSegment = uri.pathSegments.getOrNull(uri.pathSegments.size - 2)
+
+        if (host.contains("jiosaavn.com")) {
+            // Examples:
+            // https://www.jiosaavn.com/album/kanchana/TODtx4wo8yU_
+            // https://www.jiosaavn.com/song/some-song-name/someId
+            // https://www.jiosaavn.com/featured/some-playlist-name/someId
+            val type = pathSegments.getOrNull(0)
+            val id = lastSegment
+            if (id != null) {
+                when (type) {
+                    "album" -> putExtra(IntentData.playlistId, "jsa_album_$id")
+                    "featured", "playlist" -> putExtra(IntentData.playlistId, "jsa_playlist_$id")
+                    "song" -> putExtra(IntentData.videoId, id)
+                }
+            }
+            return@with this
+        }
+
+        val secondLastSegment = pathSegments.getOrNull(pathSegments.size - 2)
         when {
             lastSegment == "results" -> {
                 putExtra(IntentData.query, uri.getQueryParameter("search_query"))
@@ -83,5 +103,6 @@ object IntentHelper {
                 putExtra(IntentData.timeStamp, uri.getQueryParameter("t")?.toTimeInSeconds())
             }
         }
+        this
     }
 }
