@@ -279,7 +279,12 @@ object ImportHelper {
             ImportFormat.PIPED -> {
                 val playlistFile = PipedPlaylistFile(playlists = playlists.map {
                     val videos = it.relatedStreams.map { item ->
-                        "$YOUTUBE_FRONTEND_URL/watch?v=${item.url!!.toID()}"
+                        val videoId = item.url!!.toID()
+                        if (videoId.startsWith("jsa_song_")) {
+                            "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
+                        } else {
+                            "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"
+                        }
                     }
                     PipedImportPlaylist(it.name, "playlist", "private", videos)
                 })
@@ -315,7 +320,14 @@ object ImportHelper {
             ImportFormat.URLSORIDS -> {
                 val urlListExport = playlists
                     .flatMap { it.relatedStreams }
-                    .joinToString("\n") { YOUTUBE_FRONTEND_URL + "/watch?v=" + it.url!!.toID() }
+                    .joinToString("\n") { 
+                        val videoId = it.url!!.toID()
+                        if (videoId.startsWith("jsa_song_")) {
+                            "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
+                        } else {
+                            "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"
+                        }
+                    }
 
                 context.contentResolver.openOutputStream(uri)?.use {
                     it.write(urlListExport.toByteArray())

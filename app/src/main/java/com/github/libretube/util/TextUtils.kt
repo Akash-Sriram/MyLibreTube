@@ -103,6 +103,11 @@ object TextUtils {
     fun getVideoIdFromUri(uri: Uri) = when (uri.host) {
         "www.youtube.com", "m.youtube.com", "piped.video" -> uri.getQueryParameter("v")
         "youtu.be" -> uri.lastPathSegment
+        "www.jiosaavn.com" -> {
+            if (uri.pathSegments.getOrNull(0) == "song") {
+                "jsa_song_${uri.lastPathSegment}"
+            } else null
+        }
         else -> null
     }
 

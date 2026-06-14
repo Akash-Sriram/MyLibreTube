@@ -56,7 +56,11 @@ class BackupDialog : DialogFragment() {
             it.localPlaylists = Database.localPlaylistsDao().getAll()
             it.playlists = it.localPlaylists?.map { (playlist, playlistVideos) ->
                 val videos = playlistVideos.map { item ->
-                    "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=${item.videoId}"
+                    if (item.videoId.startsWith("jsa_song_")) {
+                        "https://www.jiosaavn.com/song/track/${item.videoId.removePrefix("jsa_song_")}"
+                    } else {
+                        "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=${item.videoId}"
+                    }
                 }
                 PipedImportPlaylist(playlist.name, "playlist", "private", videos)
             }
