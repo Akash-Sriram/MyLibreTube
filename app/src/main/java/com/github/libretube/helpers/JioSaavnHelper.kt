@@ -11,7 +11,8 @@ object JioSaavnHelper {
     
     fun isJioSaavn(videoId: String?, isOffline: Boolean): Boolean {
         if (videoId == null || isOffline) return false
-        return videoId.toID().length != 11
+        val id = videoId.toID()
+        return id.startsWith("jsa_") || id.length != 11
     }
 
     fun setupAudioOnlyThumbnail(playerBackgroundBinding: CustomExoPlayerViewTemplateBinding, streams: Streams) {

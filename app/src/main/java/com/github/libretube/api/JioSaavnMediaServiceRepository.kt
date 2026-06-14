@@ -19,7 +19,7 @@ fun JioSaavnOfficialSong.toStreamItem(): StreamItem {
     val uploaderName = moreInfo?.music ?: music ?: "JioSaavn"
     val finalAlbumId = moreInfo?.albumId ?: albumId ?: albumid ?: "unknown"
     return StreamItem(
-        url = "/watch?v=$id",
+        url = "jsa_song_$id",
         type = StreamItem.TYPE_STREAM,
         title = title ?: name ?: "Unknown Title",
         thumbnail = thumbnail,
@@ -43,7 +43,7 @@ fun JioSaavnOfficialSong.toContentItem(): ContentItem {
     val uploaderName = moreInfo?.music ?: music ?: "JioSaavn"
     val finalAlbumId = moreInfo?.albumId ?: albumId ?: albumid ?: "unknown"
     return ContentItem(
-        url = "/watch?v=$id",
+        url = "jsa_song_$id",
         type = StreamItem.TYPE_STREAM,
         thumbnail = thumbnail,
         title = title ?: name ?: "Unknown Title",
@@ -181,8 +181,9 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     override suspend fun getTrending(region: String, category: TrendingCategory): List<StreamItem> = emptyList()
 
     override suspend fun getStreams(videoId: String): Streams {
-        val response = api.getSongDetails(pids = videoId)
-        val song = response[videoId] ?: throw Exception("Song not found")
+        val cleanId = videoId.removePrefix("jsa_song_")
+        val response = api.getSongDetails(pids = cleanId)
+        val song = response[cleanId] ?: throw Exception("Song not found")
         return song.toStreams()
     }
 

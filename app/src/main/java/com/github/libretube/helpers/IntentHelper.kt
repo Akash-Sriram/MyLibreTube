@@ -72,7 +72,7 @@ object IntentHelper {
                 when (type) {
                     "album" -> putExtra(IntentData.playlistId, "jsa_album_$id")
                     "featured", "playlist" -> putExtra(IntentData.playlistId, "jsa_playlist_$id")
-                    "song" -> putExtra(IntentData.videoId, id)
+                    "song" -> putExtra(IntentData.videoId, "jsa_song_$id")
                 }
             }
             return@with this
