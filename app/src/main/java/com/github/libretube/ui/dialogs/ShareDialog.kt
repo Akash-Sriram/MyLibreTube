@@ -136,17 +136,19 @@ class ShareDialog : DialogFragment() {
         binding: DialogShareBinding,
         customInstances: List<CustomInstance>
     ): String {
-        if (id.startsWith("jsa_song_")) {
-            val cleanId = id.removePrefix("jsa_song_")
-            return "https://www.jiosaavn.com/song/track/$cleanId"
-        } else if (id.startsWith("jsa_album_")) {
-            val cleanId = id.removePrefix("jsa_album_")
-            return "https://www.jiosaavn.com/album/album/$cleanId"
-        } else if (id.startsWith("jsa_playlist_")) {
-            val cleanId = id.removePrefix("jsa_playlist_")
-            return "https://www.jiosaavn.com/featured/playlist/$cleanId"
-        } else if (shareObjectType == ShareObjectType.CHANNEL && id.length <= 15) {
-            return "https://www.jiosaavn.com/artist/artist/$id"
+        val cleanId = id.removePrefix("jsa_song_").removePrefix("jsa_album_").removePrefix("jsa_playlist_")
+        val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(id, false)
+        
+        if (isJioSaavn) {
+            if (id.startsWith("jsa_album_")) {
+                return "https://www.jiosaavn.com/album/album/$cleanId"
+            } else if (id.startsWith("jsa_playlist_")) {
+                return "https://www.jiosaavn.com/featured/playlist/$cleanId"
+            } else if (shareObjectType == ShareObjectType.CHANNEL) {
+                return "https://www.jiosaavn.com/artist/artist/$cleanId"
+            } else {
+                return "https://www.jiosaavn.com/song/track/$cleanId"
+            }
         }
 
         val host = when {

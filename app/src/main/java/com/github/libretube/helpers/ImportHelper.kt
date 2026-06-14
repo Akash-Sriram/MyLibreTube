@@ -280,7 +280,8 @@ object ImportHelper {
                 val playlistFile = PipedPlaylistFile(playlists = playlists.map {
                     val videos = it.relatedStreams.map { item ->
                         val videoId = item.url!!.toID()
-                        if (videoId.startsWith("jsa_song_")) {
+                        val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)
+                        if (isJioSaavn) {
                             "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
                         } else {
                             "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"
@@ -322,7 +323,8 @@ object ImportHelper {
                     .flatMap { it.relatedStreams }
                     .joinToString("\n") { 
                         val videoId = it.url!!.toID()
-                        if (videoId.startsWith("jsa_song_")) {
+                        val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)
+                        if (isJioSaavn) {
                             "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
                         } else {
                             "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"

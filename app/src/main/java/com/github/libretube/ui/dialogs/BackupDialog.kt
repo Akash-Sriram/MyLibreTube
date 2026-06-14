@@ -56,7 +56,8 @@ class BackupDialog : DialogFragment() {
             it.localPlaylists = Database.localPlaylistsDao().getAll()
             it.playlists = it.localPlaylists?.map { (playlist, playlistVideos) ->
                 val videos = playlistVideos.map { item ->
-                    if (item.videoId.startsWith("jsa_song_")) {
+                    val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(item.videoId, false)
+                    if (isJioSaavn) {
                         "https://www.jiosaavn.com/song/track/${item.videoId.removePrefix("jsa_song_")}"
                     } else {
                         "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=${item.videoId}"
