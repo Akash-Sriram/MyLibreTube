@@ -305,6 +305,16 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
         } else if (cleanPlaylistId.startsWith("jsa_")) {
             cleanPlaylistId = cleanPlaylistId.substring(4)
         }
+        
+        // Handle compound IDs: if there's an underscore, the first part is the internal ID.
+        // Wait! If the ID was imported from a URL, it might just be the token!
+        // A token is not numeric. An internal ID usually is numeric (for albums/playlists).
+        // Let's split by underscore.
+        val parts = cleanPlaylistId.split("_")
+        val internalId = parts[0]
+        val token = parts.getOrNull(1)
+        
+        val isNumeric = internalId.all { it.isDigit() }
 
         var title = "Unknown JioSaavn Playlist"
         var description = ""
@@ -312,14 +322,12 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
         var uploader = "JioSaavn"
         var songs = emptyList<JioSaavnOfficialSong>()
 
-        val isNumeric = cleanPlaylistId.all { it.isDigit() }
-
         if (isAlbum) {
             try {
                 val response = if (isNumeric) {
-                    api.getAlbumDetails(albumId = cleanPlaylistId)
+                    api.getAlbumDetails(albumId = internalId)
                 } else {
-                    api.getAlbumDetailsByToken(token = cleanPlaylistId)
+                    api.getAlbumDetailsByToken(token = internalId)
                 }
                 title = response.title ?: response.name ?: title
                 description = "Album | Year: ${response.year ?: "Unknown"}"
@@ -327,20 +335,32 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
                 uploader = response.artist ?: response.primaryArtists ?: uploader
                 songs = response.songs ?: emptyList()
             } catch (e: Exception) {
-                android.util.Log.e("JioSaavn", "Error getting album details for id: $cleanPlaylistId", e)
+                if (token != null) {
+                    val fallback = api.getAlbumDetailsByToken(token = token)
+                    title = fallback.title ?: fallback.name ?: title
+                    description = "Album | Year: ${fallback.year ?: "Unknown"}"
+                    thumbnail = fallback.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
+                    uploader = fallback.artist ?: fallback.primaryArtists ?: uploader
+                    songs = fallback.songs ?: emptyList()
+                } else throw e
             }
         } else if (isPlaylist) {
             try {
                 val response = if (isNumeric) {
-                    api.getPlaylistDetails(listId = cleanPlaylistId)
+                    api.getPlaylistDetails(listId = internalId)
                 } else {
-                    api.getPlaylistDetailsByToken(token = cleanPlaylistId)
+                    api.getPlaylistDetailsByToken(token = internalId)
                 }
                 title = response.title ?: response.name ?: title
                 thumbnail = response.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
                 songs = response.list ?: emptyList()
             } catch (e: Exception) {
-                android.util.Log.e("JioSaavn", "Error getting playlist details for id: $cleanPlaylistId", e)
+                if (token != null) {
+                    val fallback = api.getPlaylistDetailsByToken(token = token)
+                    title = fallback.title ?: fallback.name ?: title
+                    thumbnail = fallback.image?.replace("-150x150.", "-500x500.")?.replace("-50x50.", "-500x500.") ?: ""
+                    songs = fallback.list ?: emptyList()
+                } else throw e
             }
         } else {
             if (isNumeric) {
