@@ -18,8 +18,10 @@ fun JioSaavnOfficialSong.toStreamItem(): StreamItem {
         .replace("-50x50.", "-500x500.")
     val uploaderName = moreInfo?.music ?: music ?: "JioSaavn"
     val finalAlbumId = moreInfo?.albumId ?: albumId ?: albumid ?: "unknown"
+    val token = perma_url?.split("/")?.lastOrNull()?.takeIf { it.isNotBlank() }
+    val finalId = if (token != null) "${id}_$token" else id
     return StreamItem(
-        url = "jsa_song_$id",
+        url = "jsa_song_$finalId",
         type = StreamItem.TYPE_STREAM,
         title = title ?: name ?: "Unknown Title",
         thumbnail = thumbnail,
@@ -42,8 +44,10 @@ fun JioSaavnOfficialSong.toContentItem(): ContentItem {
         .replace("-50x50.", "-500x500.")
     val uploaderName = moreInfo?.music ?: music ?: "JioSaavn"
     val finalAlbumId = moreInfo?.albumId ?: albumId ?: albumid ?: "unknown"
+    val token = perma_url?.split("/")?.lastOrNull()?.takeIf { it.isNotBlank() }
+    val finalId = if (token != null) "${id}_$token" else id
     return ContentItem(
-        url = "jsa_song_$id",
+        url = "jsa_song_$finalId",
         type = StreamItem.TYPE_STREAM,
         thumbnail = thumbnail,
         title = title ?: name ?: "Unknown Title",
@@ -64,8 +68,10 @@ fun JioSaavnOfficialAlbumItem.toContentItem(): ContentItem {
         .replace("-50x50.", "-500x500.")
     val albumName = title ?: name ?: "Unknown Album"
     val artistName = artist ?: primaryArtists ?: music ?: "Unknown Artist"
+    val token = perma_url?.split("/")?.lastOrNull()?.takeIf { it.isNotBlank() }
+    val finalId = if (token != null) "${id}_$token" else id
     return ContentItem(
-        url = "jsa_album_$id",
+        url = "jsa_album_$finalId",
         type = StreamItem.TYPE_PLAYLIST,
         thumbnail = thumbnail,
         title = albumName,
@@ -86,8 +92,10 @@ fun JioSaavnOfficialPlaylistItem.toContentItem(): ContentItem {
     val thumbnail = rawThumbnail.replace("-150x150.", "-500x500.")
         .replace("-50x50.", "-500x500.")
     val playlistName = title ?: name ?: "Unknown Playlist"
+    val token = perma_url?.split("/")?.lastOrNull()?.takeIf { it.isNotBlank() }
+    val finalId = if (token != null) "${id}_$token" else id
     return ContentItem(
-        url = "jsa_playlist_$id",
+        url = "jsa_playlist_$finalId",
         type = StreamItem.TYPE_PLAYLIST,
         thumbnail = thumbnail,
         title = playlistName,
@@ -108,13 +116,15 @@ fun JioSaavnOfficialArtistItem.toContentItem(): ContentItem {
     val thumbnail = rawThumbnail.replace("-150x150.", "-500x500.")
         .replace("-50x50.", "-500x500.")
     val artistName = name ?: title ?: "Unknown Artist"
+    val token = perma_url?.split("/")?.lastOrNull()?.takeIf { it.isNotBlank() }
+    val finalId = if (token != null) "${id}_$token" else id
     return ContentItem(
-        url = "/channel/$id",
+        url = "/channel/$finalId",
         type = StreamItem.TYPE_CHANNEL,
         thumbnail = thumbnail,
         title = artistName,
         name = artistName,
-        uploaderUrl = "/channel/$id",
+        uploaderUrl = "/channel/$finalId",
         uploaderAvatar = null,
         duration = 0,
         views = followerCount?.toLongOrNull() ?: -1L,
@@ -181,9 +191,13 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     override suspend fun getTrending(region: String, category: TrendingCategory): List<StreamItem> = emptyList()
 
     override suspend fun getStreams(videoId: String): Streams {
-        val cleanId = videoId.removePrefix("jsa_song_")
-        val response = api.getSongDetails(pids = cleanId)
-        val song = response[cleanId] ?: throw Exception("Song not found")
+        val cleanId = videoId.removePrefix("jsa_song_").substringBefore("_")
+        var response = try {
+            api.getSongDetails(pids = cleanId)
+        } catch (e: Exception) {
+            api.getSongDetailsByToken(token = cleanId)
+        }
+        val song = response.values.firstOrNull() ?: throw Exception("Song not found")
         return song.toStreams()
     }
 

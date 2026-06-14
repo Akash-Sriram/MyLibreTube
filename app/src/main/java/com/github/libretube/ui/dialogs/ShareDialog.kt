@@ -140,14 +140,16 @@ class ShareDialog : DialogFragment() {
         val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(id, false)
         
         if (isJioSaavn) {
+            val parts = cleanId.split("_")
+            val token = parts.getOrNull(1) ?: parts[0]
             if (id.startsWith("jsa_album_")) {
-                return "https://www.jiosaavn.com/album/album/$cleanId"
+                return "https://www.jiosaavn.com/album/album/$token"
             } else if (id.startsWith("jsa_playlist_")) {
-                return "https://www.jiosaavn.com/featured/playlist/$cleanId"
+                return "https://www.jiosaavn.com/featured/playlist/$token"
             } else if (shareObjectType == ShareObjectType.CHANNEL) {
-                return "https://www.jiosaavn.com/artist/artist/$cleanId"
+                return "https://www.jiosaavn.com/artist/artist/$token"
             } else {
-                return "https://www.jiosaavn.com/song/track/$cleanId"
+                return "https://www.jiosaavn.com/song/track/$token"
             }
         }
 

@@ -25,7 +25,8 @@ data class JioSaavnOfficialSong(
     val albumid: String? = null,
     @SerialName("album_id") val albumId: String? = null,
     val music: String? = null,
-    @SerialName("more_info") val moreInfo: JioSaavnOfficialMoreInfo? = null
+    @SerialName("more_info") val moreInfo: JioSaavnOfficialMoreInfo? = null,
+    val perma_url: String? = null
 )
 
 @Serializable
@@ -42,7 +43,8 @@ data class JioSaavnOfficialAlbumItem(
     val music: String? = null,
     val artist: String? = null,
     @SerialName("primary_artists") val primaryArtists: String? = null,
-    val year: String? = null
+    val year: String? = null,
+    val perma_url: String? = null
 )
 
 @Serializable
@@ -58,7 +60,8 @@ data class JioSaavnOfficialPlaylistItem(
     val image: String? = null,
     val firstname: String? = null,
     val followerCount: String? = null,
-    val songCount: String? = null
+    val songCount: String? = null,
+    val perma_url: String? = null
 )
 
 @Serializable
@@ -73,7 +76,8 @@ data class JioSaavnOfficialArtistItem(
     val title: String? = null,
     val image: String? = null,
     val role: String? = null,
-    val followerCount: String? = null
+    val followerCount: String? = null,
+    val perma_url: String? = null
 )
 
 @Serializable
@@ -202,4 +206,15 @@ interface JioSaavnApi {
         @Query("api_version") apiVersion: String = "4",
         @Query("ctx") ctx: String = "web6s"
     ): JioSaavnOfficialPlaylistResponse
+
+    @GET("api.php")
+    suspend fun getSongDetailsByToken(
+        @Query("__call") call: String = "webapi.get",
+        @Query("token") token: String,
+        @Query("type") type: String = "song",
+        @Query("_format") format: String = "json",
+        @Query("_marker") marker: String = "0",
+        @Query("api_version") apiVersion: String = "4",
+        @Query("ctx") ctx: String = "web6s"
+    ): Map<String, JioSaavnOfficialSong>
 }

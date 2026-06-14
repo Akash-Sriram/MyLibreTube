@@ -282,7 +282,10 @@ object ImportHelper {
                         val videoId = item.url!!.toID()
                         val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)
                         if (isJioSaavn) {
-                            "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
+                            val cleanId = videoId.removePrefix("jsa_song_")
+                            val parts = cleanId.split("_")
+                            val token = parts.getOrNull(1) ?: parts[0]
+                            "https://www.jiosaavn.com/song/track/$token"
                         } else {
                             "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"
                         }
@@ -325,7 +328,10 @@ object ImportHelper {
                         val videoId = it.url!!.toID()
                         val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(videoId, false)
                         if (isJioSaavn) {
-                            "https://www.jiosaavn.com/song/track/${videoId.removePrefix("jsa_song_")}"
+                            val cleanId = videoId.removePrefix("jsa_song_")
+                            val parts = cleanId.split("_")
+                            val token = parts.getOrNull(1) ?: parts[0]
+                            "https://www.jiosaavn.com/song/track/$token"
                         } else {
                             "$YOUTUBE_FRONTEND_URL/watch?v=$videoId"
                         }

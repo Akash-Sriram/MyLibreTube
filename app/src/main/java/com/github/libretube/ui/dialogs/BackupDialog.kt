@@ -58,7 +58,10 @@ class BackupDialog : DialogFragment() {
                 val videos = playlistVideos.map { item ->
                     val isJioSaavn = com.github.libretube.helpers.JioSaavnHelper.isJioSaavn(item.videoId, false)
                     if (isJioSaavn) {
-                        "https://www.jiosaavn.com/song/track/${item.videoId.removePrefix("jsa_song_")}"
+                        val cleanId = item.videoId.removePrefix("jsa_song_")
+                        val parts = cleanId.split("_")
+                        val token = parts.getOrNull(1) ?: parts[0]
+                        "https://www.jiosaavn.com/song/track/$token"
                     } else {
                         "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=${item.videoId}"
                     }
