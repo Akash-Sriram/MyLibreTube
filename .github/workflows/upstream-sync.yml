@@ -6,8 +6,8 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  sync_latest_from_upstream:
-    name: Sync latest commits from upstream repo
+  sync_newpipe_extractor:
+    name: Sync latest NewPipeExtractor from upstream
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,23 +19,6 @@ jobs:
           ref: master
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Sync upstream changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          git remote add upstream https://github.com/libre-tube/LibreTube.git
-          git fetch upstream master
-          
-          # Try to merge upstream/master into the checked out master branch
-          if git merge upstream/master --no-edit; then
-            echo "Successfully merged upstream changes"
-          else
-            echo "Merge conflict detected! Please resolve manually."
-            git merge --abort
-            exit 1
-          fi
 
       - name: Sync NewPipeExtractor and Push
         run: |
