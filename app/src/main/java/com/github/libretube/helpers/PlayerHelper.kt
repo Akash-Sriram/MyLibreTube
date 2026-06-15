@@ -353,16 +353,10 @@ object PlayerHelper {
         )
 
     val fullLocalMode: Boolean
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.FULL_LOCAL_MODE,
-            true
-        )
+        get() = true
 
     val localStreamExtraction: Boolean
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.LOCAL_STREAM_EXTRACTION,
-            true
-        )
+        get() = true
 
     val localRYD: Boolean
         get() = PreferenceHelper.getBoolean(

@@ -1,7 +1,6 @@
 package com.github.libretube.helpers
 
-import com.github.libretube.api.PipedMediaServiceRepository
-import com.github.libretube.api.RetrofitInstance
+
 import com.github.libretube.constants.PreferenceKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,14 +9,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 object ProxyHelper {
     fun fetchProxyUrl() {
-        CoroutineScope(Dispatchers.IO).launch {
-            runCatching {
-                RetrofitInstance.externalApi.getInstanceConfig(PipedMediaServiceRepository.apiUrl)
-                    .imageProxyUrl?.let {
-                        PreferenceHelper.putString(PreferenceKeys.IMAGE_PROXY_URL, it)
-                    }
-            }
-        }
+        // No longer fetches proxy URLs from Piped as Piped is removed.
     }
 
     /**

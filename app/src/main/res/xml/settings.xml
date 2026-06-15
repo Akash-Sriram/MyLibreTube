@@ -8,11 +8,6 @@
         app:key="general"
         app:title="@string/general" />
 
-    <Preference
-        android:icon="@drawable/ic_server"
-        app:key="instance"
-        app:summary="@string/instance_summary"
-        app:title="@string/instance" />
 
     <Preference
         android:icon="@drawable/ic_color"

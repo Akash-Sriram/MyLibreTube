@@ -9,7 +9,6 @@ import com.github.libretube.enums.PlaylistType
 import com.github.libretube.helpers.PreferenceHelper
 import com.github.libretube.obj.PipedImportPlaylist
 import com.github.libretube.repo.LocalPlaylistsRepository
-import com.github.libretube.repo.PipedPlaylistRepository
 import com.github.libretube.repo.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,10 +23,7 @@ object PlaylistsHelper {
     private val token get() = PreferenceHelper.getToken()
     val loggedIn: Boolean get() = token.isNotEmpty()
     private val playlistsRepository: PlaylistRepository
-        get() = when {
-            loggedIn -> PipedPlaylistRepository()
-            else -> LocalPlaylistsRepository()
-        }
+        get() = LocalPlaylistsRepository()
 
     suspend fun getPlaylists(): List<Playlists> = withContext(Dispatchers.IO) {
         val playlists = playlistsRepository.getPlaylists()

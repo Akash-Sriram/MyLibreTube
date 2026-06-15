@@ -45,11 +45,7 @@ interface MediaServiceRepository {
     companion object {
         private val jioSaavnRepo = JioSaavnMediaServiceRepository()
         private val youtubeRepo: MediaServiceRepository
-            get() = when {
-                PlayerHelper.fullLocalMode -> NewPipeMediaServiceRepository()
-                PlayerHelper.localStreamExtraction -> LocalStreamsExtractionPipedMediaServiceRepository()
-                else -> PipedMediaServiceRepository()
-            }
+            get() = NewPipeMediaServiceRepository()
 
         val instance: MediaServiceRepository = object : MediaServiceRepository {
             override fun getTrendingCategories(): List<TrendingCategory> =
