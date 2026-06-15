@@ -71,10 +71,9 @@ class ShareDialog : DialogFragment() {
             when (val previousSelection =
                 PreferenceHelper.getInt(PreferenceKeys.SELECTED_SHARE_HOST, 0)) {
                 0 -> binding.youtube.id
-                1 -> binding.piped.id
                 else -> customInstances.firstOrNull {
                     it.name.hashCode() == previousSelection
-                }?.name?.hashCode() ?: 0
+                }?.name?.hashCode() ?: binding.youtube.id
             }
         )
 
@@ -83,7 +82,6 @@ class ShareDialog : DialogFragment() {
             PreferenceHelper.putInt(
                 PreferenceKeys.SELECTED_SHARE_HOST, when {
                     binding.youtube.isChecked -> 0
-                    binding.piped.isChecked -> 1
                     else -> checkedId
                 }
             )
@@ -154,7 +152,6 @@ class ShareDialog : DialogFragment() {
         }
 
         val host = when {
-            binding.piped.isChecked -> PIPED_FRONTEND_URL
             binding.youtube.isChecked -> YOUTUBE_FRONTEND_URL
             // only available for custom instances
             else -> {
@@ -190,6 +187,5 @@ class ShareDialog : DialogFragment() {
         const val YOUTUBE_FRONTEND_URL = "https://www.youtube.com"
         const val YOUTUBE_MUSIC_URL = "https://music.youtube.com"
         const val YOUTUBE_SHORT_URL = "https://youtu.be"
-        const val PIPED_FRONTEND_URL = "https://piped.video"
     }
 }

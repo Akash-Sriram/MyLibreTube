@@ -473,7 +473,7 @@
     <string name="export_subscriptions_to">Export subscriptions to</string>
     <string name="import_playlists_from">Import playlists from</string>
     <string name="export_playlists_to">Export playlists to</string>
-    <string name="import_format_piped" translatable="false">Piped</string>
+    <string name="import_format_piped" translatable="false">LibreTube (JSON)</string>
     <string name="import_format_newpipe" translatable="false">NewPipe</string>
     <string name="import_format_freetube" translatable="false">FreeTube</string>
     <string name="import_format_youtube_csv" translatable="false">YouTube (CSV)</string>
