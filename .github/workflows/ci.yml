@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - uses: gradle/actions/wrapper-validation@v5
+      - uses: gradle/actions/wrapper-validation@v6
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
