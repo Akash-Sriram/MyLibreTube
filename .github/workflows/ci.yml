@@ -15,7 +15,7 @@ on:
       - "assets/**"
       - ".github/**/*.md"
 
-permissions: read-all
+permissions: {}
 
 jobs:
   debug-builds:
