@@ -77,7 +77,7 @@ jobs:
           python ../uploader.py
       
       - name: Upload APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: app
           path: nightly/*.apk
