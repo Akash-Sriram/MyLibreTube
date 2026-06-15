@@ -2,7 +2,7 @@ name: Upstream Sync
 
 on:
   schedule:
-    - cron: '0 */8 * * *' # Run every 8 hours
+    - cron: '0 * * * *' # Run every hour
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -31,10 +31,28 @@ jobs:
           # Try to merge upstream/master into the checked out master branch
           if git merge upstream/master --no-edit; then
             echo "Successfully merged upstream changes"
-            # Push changes if there is something to push
-            git push origin master
           else
             echo "Merge conflict detected! Please resolve manually."
             git merge --abort
             exit 1
           fi
+
+      - name: Sync NewPipeExtractor and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          LATEST_NPE_COMMIT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/libre-tube/NewPipeExtractor/commits/dev" | jq -r '.sha' | cut -c1-9)
+          if [ "$LATEST_NPE_COMMIT" != "null" ] && [ ! -z "$LATEST_NPE_COMMIT" ]; then
+            echo "Latest NewPipeExtractor dev commit: $LATEST_NPE_COMMIT"
+            sed -i "s/newpipeextractor = \"[^\"]*\"/newpipeextractor = \"$LATEST_NPE_COMMIT\"/g" gradle/libs.versions.toml
+          else
+            echo "Failed to fetch latest NPE commit from GitHub API."
+          fi
+          
+          git add gradle/libs.versions.toml
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "ci: auto-update NewPipeExtractor to dev commit $LATEST_NPE_COMMIT"
+          fi
+          
+          git push origin master
