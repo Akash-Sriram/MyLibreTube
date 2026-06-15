@@ -17,11 +17,7 @@ class MainSettings : BasePreferenceFragment() {
         val update = findPreference<Preference>("update")
         update?.summary = "v${BuildConfig.VERSION_NAME}"
         update?.setOnPreferenceClickListener {
-            com.github.libretube.helpers.IntentHelper.openLinkFromHref(
-                requireContext(),
-                childFragmentManager,
-                "https://github.com/Akash-Sriram/MyLibreTube/releases/latest"
-            )
+            com.github.libretube.helpers.UpdateHelper.checkForUpdate(requireContext())
             true
         }
 
