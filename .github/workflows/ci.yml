@@ -15,12 +15,13 @@ on:
       - "assets/**"
       - ".github/**/*.md"
 
-permissions:
-  contents: read
+permissions: read-all
 
 jobs:
   debug-builds:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: gradle/actions/wrapper-validation@v5
