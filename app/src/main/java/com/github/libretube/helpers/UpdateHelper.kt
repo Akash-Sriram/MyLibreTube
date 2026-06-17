@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONObject
+import java.io.File
 
 object UpdateHelper {
     private const val GITHUB_API_URL = "https://api.github.com/repos/Akash-Sriram/MyLibreTube/releases/latest"
@@ -52,7 +53,6 @@ object UpdateHelper {
                 val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
 
                 withContext(Dispatchers.Main) {
-                    // Check if tag_name is different from current VERSION_NAME
                     if (tagName != BuildConfig.VERSION_NAME) {
                         Toast.makeText(appContext, "Update available! Downloading...", Toast.LENGTH_SHORT).show()
                         startDownload(appContext, downloadUrl, tagName)
@@ -70,16 +70,34 @@ object UpdateHelper {
     }
 
     private fun startDownload(context: Context, url: String, tagName: String) {
+        val apkFileName = "MyLibreTube-$tagName.apk"
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle("MyLibreTube Update")
             .setDescription("Downloading $tagName...")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "MyLibreTube-$tagName.apk")
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, apkFileName)
             .setMimeType("application/vnd.android.package-archive")
 
         val downloadId = downloadManager.enqueue(request)
 
+        // Listen for when our own package gets replaced (app successfully updated).
+        // This is the most reliable signal that the install is complete — delete the APK here.
+        val onPackageReplaced = object : BroadcastReceiver() {
+            override fun onReceive(ctxt: Context, intent: Intent) {
+                deleteApkFile(apkFileName)
+                downloadManager.remove(downloadId)
+                try { ctxt.unregisterReceiver(this) } catch (e: Exception) {}
+            }
+        }
+        ContextCompat.registerReceiver(
+            context,
+            onPackageReplaced,
+            IntentFilter(Intent.ACTION_MY_PACKAGE_REPLACED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
+        // Listen for download completion and prompt the install.
         val onComplete = object : BroadcastReceiver() {
             override fun onReceive(ctxt: Context, intent: Intent) {
                 val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
@@ -96,9 +114,7 @@ object UpdateHelper {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-                    try {
-                        ctxt.unregisterReceiver(this)
-                    } catch (e: Exception) {}
+                    try { ctxt.unregisterReceiver(this) } catch (e: Exception) {}
                 }
             }
         }
@@ -109,5 +125,20 @@ object UpdateHelper {
             IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
             ContextCompat.RECEIVER_EXPORTED
         )
+    }
+
+    /**
+     * Deletes the downloaded APK from the public Downloads folder.
+     */
+    private fun deleteApkFile(fileName: String) {
+        try {
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                fileName
+            )
+            if (file.exists()) file.delete()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
