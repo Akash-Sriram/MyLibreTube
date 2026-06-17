@@ -384,6 +384,9 @@
     <string name="alternative_pip_controls_summary">Show audio only and skip controls in PiP instead of forward and rewind</string>
     <string name="audio_only_mode">Audio only mode</string>
     <string name="audio_only_mode_summary">Turn LibreTube into a music player</string>
+    <string name="auto_music_audio_mode">Auto audio for music videos</string>
+    <string name="auto_music_audio_mode_summary">Automatically open music category videos (YouTube Music) in the audio player</string>
+
     <string name="sleep_timer">Sleep timer</string>
     <string name="skip_silence">Skip silence</string>
     <string name="help">Help</string>

@@ -1131,9 +1131,16 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
 
         setPlayerDefaults()
 
+        // Auto-redirect music category videos to the audio-only player
+        if (!isOffline && streams.category == Streams.CATEGORY_MUSIC && PlayerHelper.autoMusicAudioMode) {
+            switchToAudioMode()
+            return
+        }
+
         binding.player.useController = false
 
         JioSaavnHelper.setupAudioOnlyThumbnail(playerBackgroundBinding, streams)
+
 
         if (binding.playerMotionLayout.progress != 1.0f) {
             // show controllers when not in picture in picture mode

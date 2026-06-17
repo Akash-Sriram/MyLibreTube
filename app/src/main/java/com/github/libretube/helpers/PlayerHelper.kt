@@ -278,6 +278,12 @@ object PlayerHelper {
             false
         )
 
+    val autoMusicAudioMode: Boolean
+        get() = PreferenceHelper.getBoolean(
+            PreferenceKeys.AUTO_MUSIC_AUDIO_MODE,
+            true
+        )
+
     val seekIncrement: Long
         get() = PreferenceHelper.getString(
             PreferenceKeys.SEEK_INCREMENT,
