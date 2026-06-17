@@ -77,6 +77,7 @@ import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.PlayerHelper
 import com.github.libretube.helpers.PlayerHelper.getCurrentSegment
 import com.github.libretube.helpers.JioSaavnHelper
+import com.github.libretube.helpers.MusicCategoryCache
 import com.github.libretube.helpers.ThemeHelper
 import com.github.libretube.helpers.WindowHelper
 import com.github.libretube.obj.ShareData
@@ -1131,10 +1132,15 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
 
         setPlayerDefaults()
 
-        // Auto-redirect music category videos to the audio-only player
-        if (!isOffline && streams.category == Streams.CATEGORY_MUSIC && PlayerHelper.autoMusicAudioMode) {
-            switchToAudioMode()
-            return
+        // Cache category so NavigationHelper can skip the video player on future plays
+        if (!isOffline) {
+            val isMusic = streams.category == Streams.CATEGORY_MUSIC
+            MusicCategoryCache.put(requireContext(), videoId, isMusic)
+            // Auto-redirect to audio player for music category videos
+            if (isMusic && PlayerHelper.autoMusicAudioMode) {
+                switchToAudioMode()
+                return
+            }
         }
 
         binding.player.useController = false

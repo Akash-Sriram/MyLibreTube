@@ -56,7 +56,13 @@ object NavigationHelper {
         audioOnlyPlayerRequested: Boolean = false,
     ) {
         val isJioSaavn = JioSaavnHelper.isJioSaavn(playerData.videoId, playerData.isOffline)
-        val finalAudioOnlyPlayerRequested = audioOnlyPlayerRequested || isJioSaavn
+        // Check cache: if we already know this is a music video, route directly to audio player
+        val isCachedMusic = !playerData.isOffline
+            && playerData.videoId != null
+            && PlayerHelper.autoMusicAudioMode
+            && MusicCategoryCache.get(context, playerData.videoId.toID()) == true
+        val finalAudioOnlyPlayerRequested = audioOnlyPlayerRequested || isJioSaavn || isCachedMusic
+
 
         // attempt to attach to the current media session first by using the corresponding
         // video/audio player instance
