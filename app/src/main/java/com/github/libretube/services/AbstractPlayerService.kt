@@ -205,6 +205,8 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
                 trackSelector?.updateParameters {
                     setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, isAudioOnlyPlayer)
                 }
+                // Audio player always handles autoplay — no countdown UI to wait for
+                if (isAudioOnlyPlayer) shouldHandleAutoplay = true
                 updateNotification()
             }
 
@@ -213,8 +215,12 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
             }
 
             args.containsKey(PlayerCommand.SET_AUTOPLAY_COUNTDOWN_ENABLED.name) -> {
-                shouldHandleAutoplay =
-                    !args.getBoolean(PlayerCommand.SET_AUTOPLAY_COUNTDOWN_ENABLED.name)
+                // Only disable service-level autoplay when NOT in audio-only mode.
+                // In audio mode the service must always advance on its own.
+                if (!isAudioOnlyPlayer) {
+                    shouldHandleAutoplay =
+                        !args.getBoolean(PlayerCommand.SET_AUTOPLAY_COUNTDOWN_ENABLED.name)
+                }
             }
         }
     }

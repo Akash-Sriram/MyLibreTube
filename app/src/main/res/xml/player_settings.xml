@@ -141,7 +141,7 @@
             app:key="queue_insert_related_videos" />
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:summary="@string/autoplay_playlists_summary"
             android:title="@string/autoplay_playlists"
             app:key="autoplay_playlists" />

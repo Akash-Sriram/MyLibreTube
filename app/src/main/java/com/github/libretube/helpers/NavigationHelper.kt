@@ -73,7 +73,8 @@ object NavigationHelper {
             if (playerData.isOffline != isOffline || playerData.videoId == null) return@runOnPlayerFragment false
 
             try {
-                PlayingQueue.clearAfterCurrent()
+                // Only clear after current if not keeping the playlist queue
+                if (!playerData.keepQueue) PlayingQueue.clearAfterCurrent()
                 this.playNextVideo(playerData.videoId.toID())
 
                 if (finalAudioOnlyPlayerRequested) {
@@ -98,7 +99,9 @@ object NavigationHelper {
             // otherwise, recreate the player
             if (playerData.isOffline != isOffline || playerData.videoId == null) return@runOnAudioPlayerFragment false
 
-            PlayingQueue.clearAfterCurrent()
+            // Only clear after current if we are NOT keeping the queue
+            // (keepQueue=true means PlaylistFragment already set the full queue)
+            if (!playerData.keepQueue) PlayingQueue.clearAfterCurrent()
             this.playNextVideo(playerData.videoId.toID())
 
             if (!finalAudioOnlyPlayerRequested && !audioOnlyMode) {

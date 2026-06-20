@@ -206,7 +206,11 @@ open class OnlinePlayerService : AbstractPlayerService() {
                 return
             }
 
-            if (!PlayerHelper.isAutoPlayEnabled(playlistId != null) || !shouldHandleAutoplay) return
+            // In audio-only mode always advance — the user is listening to a playlist.
+            // In video mode respect the autoplay and shouldHandleAutoplay guards.
+            val canAutoPlay = isAudioOnlyPlayer ||
+                (PlayerHelper.isAutoPlayEnabled(playlistId != null) && shouldHandleAutoplay)
+            if (!canAutoPlay) return
         }
 
         val nextVideo = nextId ?: PlayingQueue.getNext() ?: return
