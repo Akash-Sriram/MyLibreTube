@@ -2,57 +2,45 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        android:icon="@drawable/ic_settings"
-        android:summary="@string/general_summary"
-        app:key="general"
-        app:title="@string/general" />
+    <PreferenceCategory app:title="@string/settings_category_configuration">
+        <Preference
+            android:icon="@drawable/ic_settings"
+            app:key="general"
+            app:title="@string/general" />
 
+        <Preference
+            android:icon="@drawable/ic_play_filled"
+            app:key="player"
+            app:title="@string/player" />
 
+        <Preference
+            android:icon="@drawable/ic_history_filled"
+            app:key="history"
+            app:title="@string/history" />
 
+        <Preference
+            android:icon="@drawable/ic_backup"
+            app:key="backup_restore"
+            app:title="@string/backup_restore" />
+    </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/library">
+        <Preference
+            android:icon="@drawable/ic_time_outlined"
+            app:key="view_watch_history"
+            app:title="@string/watch_history" />
+    </PreferenceCategory>
 
-
-    <Preference
-        android:icon="@drawable/ic_play_filled"
-        app:key="player"
-        app:summary="@string/player_summary"
-        app:title="@string/player" />
-
-
-
-    <Preference
-        android:icon="@drawable/ic_time_outlined"
-        app:key="view_watch_history"
-        app:title="@string/watch_history" />
-
-    <Preference
-        android:icon="@drawable/ic_history_filled"
-        android:summary="@string/history_summary"
-        app:key="history"
-        app:title="@string/history" />
-
-
-
-    <Preference
-        android:icon="@drawable/ic_backup"
-        app:key="backup_restore"
-        app:summary="@string/backup_restore_summary"
-        app:title="@string/backup_restore" />
-
-    <PreferenceCategory>
-
+    <PreferenceCategory app:title="@string/settings_category_system">
         <Preference
             android:icon="@drawable/ic_update"
             app:key="update"
-            app:summary="@string/version"
             app:title="@string/update_summary" />
 
         <Preference
             android:icon="@drawable/ic_info"
             app:key="crashlog"
-            app:title="@string/crashlog"/>
-
+            app:title="@string/crashlog" />
     </PreferenceCategory>
 
 </PreferenceScreen>

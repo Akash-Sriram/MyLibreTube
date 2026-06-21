@@ -364,6 +364,8 @@
     <string name="export_playlist">Export playlist</string>
     <string name="import_watch_history">Import watch history</string>
     <string name="app_backup">App backup</string>
+    <string name="settings_category_configuration">Configuration</string>
+    <string name="settings_category_system">System</string>
     <string name="backup_folder">Set backup folder</string>
     <string name="backup_folder_summary_not_set">Choose a folder to store automatic and manual backups</string>
     <string name="backup_folder_summary_set">Backup folder: %s</string>
