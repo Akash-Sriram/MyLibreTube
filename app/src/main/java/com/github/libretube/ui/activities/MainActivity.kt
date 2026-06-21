@@ -85,7 +85,7 @@ class MainActivity : AbstractPlayerHostActivity() {
 
     // registering for activity results is only possible, this here should have been part of
     // PlaylistOptionsBottomSheet instead if Android allowed us to
-    private var playlistExportFormat: ImportFormat = ImportFormat.NEWPIPE
+    private var playlistExportFormat: ImportFormat = ImportFormat.PIPED
     private var exportPlaylistId: String? = null
     private val createPlaylistsFile = registerForActivityResult(
         ActivityResultContracts.CreateDocument(FILETYPE_ANY)

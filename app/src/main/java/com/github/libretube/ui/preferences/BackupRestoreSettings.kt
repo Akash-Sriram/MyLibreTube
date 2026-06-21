@@ -33,7 +33,7 @@ import kotlinx.serialization.json.encodeToStream
 
 class BackupRestoreSettings : BasePreferenceFragment() {
     private var backupFile = BackupFile()
-    private var importFormat: ImportFormat = ImportFormat.NEWPIPE
+    private var importFormat: ImportFormat = ImportFormat.PIPED
 
     // backup and restore database
     private val getBackupFile =

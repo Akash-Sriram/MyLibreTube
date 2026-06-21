@@ -110,7 +110,6 @@ object ImportHelper {
                 }
             }
 
-            else -> throw IllegalArgumentException()
         }
 
         if (importPlaylists.isEmpty()) {

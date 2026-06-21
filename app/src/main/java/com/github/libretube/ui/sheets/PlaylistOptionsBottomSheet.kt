@@ -35,7 +35,7 @@ class PlaylistOptionsBottomSheet : BaseBottomSheet() {
     private lateinit var playlistId: String
     private lateinit var playlistType: PlaylistType
 
-    private var exportFormat: ImportFormat = ImportFormat.NEWPIPE
+    private var exportFormat: ImportFormat = ImportFormat.PIPED
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
