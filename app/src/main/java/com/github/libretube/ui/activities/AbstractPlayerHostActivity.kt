@@ -45,28 +45,6 @@ abstract class AbstractPlayerHostActivity: BaseActivity() {
                 true
             }
 
-            R.id.action_about -> {
-                val aboutIntent = Intent(this, AboutActivity::class.java)
-                startActivity(aboutIntent)
-                true
-            }
-
-            R.id.action_help -> {
-                val helpIntent = Intent(this, HelpActivity::class.java)
-                startActivity(helpIntent)
-                true
-            }
-
-            R.id.action_donate -> {
-                IntentHelper.openLinkFromHref(
-                    this,
-                    supportFragmentManager,
-                    AboutActivity.DONATE_URL,
-                    forceDefaultOpen = true
-                )
-                true
-            }
-
             else -> super.onOptionsItemSelected(item)
         }
     }

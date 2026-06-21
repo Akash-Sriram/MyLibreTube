@@ -12,7 +12,7 @@ import java.util.Locale
 object LocaleHelper {
     @Deprecated("Only used for SDKs below 33 for compatibility")
     fun getAppLocale(): Locale {
-        val languageName = PreferenceHelper.getString(PreferenceKeys.LANGUAGE, "sys")
+        val languageName = PreferenceHelper.getString(PreferenceKeys.LANGUAGE, "en")
         return when {
             languageName == "sys" -> Locale.getDefault()
             else -> getLocaleFromAndroidCode(languageName)

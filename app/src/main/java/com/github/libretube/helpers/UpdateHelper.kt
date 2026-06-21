@@ -53,12 +53,8 @@ object UpdateHelper {
                 val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
 
                 withContext(Dispatchers.Main) {
-                    if (tagName != BuildConfig.VERSION_NAME) {
-                        Toast.makeText(appContext, "Update available! Downloading...", Toast.LENGTH_SHORT).show()
-                        startDownload(appContext, downloadUrl, tagName)
-                    } else {
-                        Toast.makeText(appContext, "You are on the latest version!", Toast.LENGTH_SHORT).show()
-                    }
+                    Toast.makeText(appContext, "Downloading update...", Toast.LENGTH_SHORT).show()
+                    startDownload(appContext, downloadUrl, tagName)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

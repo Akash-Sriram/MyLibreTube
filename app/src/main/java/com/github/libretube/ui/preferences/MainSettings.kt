@@ -1,5 +1,7 @@
 package com.github.libretube.ui.preferences
 
+import android.content.Intent
+import com.github.libretube.ui.activities.MainActivity
 import android.os.Bundle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
@@ -29,15 +31,21 @@ class MainSettings : BasePreferenceFragment() {
             crashlog.isVisible = false
             true
         }
+
+        findPreference<Preference>("view_watch_history")?.setOnPreferenceClickListener {
+            val mainIntent = Intent(requireContext(), MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("open_watch_history", true)
+            }
+            startActivity(mainIntent)
+            activity?.finish()
+            true
+        }
         
         listOf(
             "general" to R.id.action_global_generalSettings,
-            "appearance" to R.id.action_global_appearanceSettings,
-            "sponsorblock" to R.id.action_global_sponsorBlockSettings,
             "player" to R.id.action_global_playerSettings,
-            "audio_video" to R.id.action_global_audioVideoSettings,
             "history" to R.id.action_global_historySettings,
-            "notifications" to R.id.action_global_notificationSettings,
             "backup_restore" to R.id.action_global_backupRestoreSettings
         ).forEach { (preferenceKey, actionId) ->
             findPreference<Preference>(preferenceKey)?.setOnPreferenceClickListener { _ ->

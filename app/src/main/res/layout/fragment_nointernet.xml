@@ -45,6 +45,7 @@
             android:layout_marginTop="5dp"
             android:text="@string/downloads"
             android:textColor="?android:attr/colorBackground"
+            android:visibility="gone"
             app:elevation="20dp" />
 
     </LinearLayout>

@@ -162,10 +162,7 @@ object PlayerHelper {
         )
 
     val relatedStreamsEnabled: Boolean
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.RELATED_STREAMS,
-            true
-        )
+        get() = false
 
     val pausePlayerOnScreenOffEnabled: Boolean
         get() = PreferenceHelper.getBoolean(
@@ -213,22 +210,13 @@ object PlayerHelper {
         ).toInt() * 1000
 
     val sponsorBlockEnabled: Boolean
-        get() = PreferenceHelper.getBoolean(
-            "sb_enabled_key",
-            true
-        )
+        get() = false
 
     val sponsorBlockNotifications: Boolean
-        get() = PreferenceHelper.getBoolean(
-            "sb_notifications_key",
-            true
-        )
+        get() = false
 
     private val sponsorBlockHighlights: Boolean
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.SB_HIGHLIGHTS,
-            true
-        )
+        get() = false
 
     val defaultSubtitleCode: String?
         get() {
@@ -365,10 +353,7 @@ object PlayerHelper {
         get() = true
 
     val localRYD: Boolean
-        get() = PreferenceHelper.getBoolean(
-            PreferenceKeys.LOCAL_RYD,
-            true
-        )
+        get() = false
 
     var repeatMode: Int
         get() = PreferenceHelper.getInt(PreferenceKeys.REPEAT_MODE, Player.REPEAT_MODE_OFF)

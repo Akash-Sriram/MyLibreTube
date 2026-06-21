@@ -43,6 +43,7 @@ import com.github.libretube.extensions.anyChildFocused
 import com.github.libretube.helpers.ImportHelper
 import com.github.libretube.helpers.IntentHelper
 import com.github.libretube.helpers.NavBarHelper
+import com.github.libretube.ui.dialogs.CreatePlaylistDialog
 import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.NetworkHelper
 import com.github.libretube.helpers.PreferenceHelper
@@ -73,7 +74,7 @@ class MainActivity : AbstractPlayerHostActivity() {
 
     // search related stuff
     private lateinit var searchView: SearchView
-    private lateinit var searchItem: MenuItem
+    lateinit var searchItem: MenuItem
     private var savedSearchQuery: String? = null
     private var shouldOpenSuggestions = true
     private var currentSearchType: SearchType = SearchType.ONLINE
@@ -172,13 +173,10 @@ class MainActivity : AbstractPlayerHostActivity() {
         val navHostFragment = binding.fragment.getFragment<NavHostFragment>()
         navController = navHostFragment.navController
         binding.bottomNav.setupWithNavController(navController)
+        binding.bottomNav.visibility = View.GONE
 
         // save start tab fragment id and apply navbar style
-        startFragmentId = try {
-            NavBarHelper.applyNavBarStyle(binding.bottomNav)
-        } catch (_: Exception) {
-            R.id.homeFragment
-        }
+        startFragmentId = R.id.libraryFragment
 
         // set default tab as start fragment
         navController.graph = navController.navInflater.inflate(R.navigation.nav).also {
@@ -201,7 +199,7 @@ class MainActivity : AbstractPlayerHostActivity() {
             navigateToBottomSelectedItem(it)
         }
 
-        if (binding.bottomNav.menu.children.none { it.itemId == startFragmentId }) deselectBottomBarItems()
+        deselectBottomBarItems()
 
         binding.toolbar.title = ThemeHelper.getStyledAppName(this)
 
@@ -246,35 +244,7 @@ class MainActivity : AbstractPlayerHostActivity() {
      * Initialize the notification badge showing the amount of new videos
      */
     private fun setupSubscriptionsBadge() {
-        if (!PreferenceHelper.getBoolean(
-                PreferenceKeys.NEW_VIDEOS_BADGE,
-                false
-            )
-        ) {
-            return
-        }
-
-        subscriptionsViewModel.fetchSubscriptions(this)
-
-        subscriptionsViewModel.videoFeed.observe(this) { feed ->
-            val lastCheckedFeedTime = PreferenceHelper.getLastCheckedFeedTime(seenByUser = true)
-            val lastSeenVideoIndex = feed.orEmpty()
-                .filter { !it.isUpcoming }
-                .indexOfFirst { it.uploaded <= lastCheckedFeedTime }
-            if (lastSeenVideoIndex < 1) return@observe
-
-            binding.bottomNav.getOrCreateBadge(R.id.subscriptionsFragment).apply {
-                number = lastSeenVideoIndex
-                backgroundColor = ThemeHelper.getThemeColor(
-                    this@MainActivity,
-                    androidx.appcompat.R.attr.colorPrimary
-                )
-                badgeTextColor = ThemeHelper.getThemeColor(
-                    this@MainActivity,
-                    com.google.android.material.R.attr.colorOnPrimary
-                )
-            }
-        }
+        return
     }
 
     private fun isSearchInProgress(): Boolean {
@@ -310,6 +280,19 @@ class MainActivity : AbstractPlayerHostActivity() {
         super.invalidateMenu()
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_create_playlist -> {
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragment) as? NavHostFragment
+                val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull()
+                val targetFragmentManager = currentFragment?.childFragmentManager ?: supportFragmentManager
+                CreatePlaylistDialog().show(targetFragmentManager, CreatePlaylistDialog::class.java.name)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.action_bar, menu)
@@ -337,6 +320,11 @@ class MainActivity : AbstractPlayerHostActivity() {
             }
 
             searchItem.setIcon(searchIconResource)
+            searchItem.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
+
+            val isLibraryScreen = destination.id == R.id.libraryFragment
+            menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
+            menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
         }
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -422,17 +410,26 @@ class MainActivity : AbstractPlayerHostActivity() {
                 item.setShowAsAction(
                     MenuItem.SHOW_AS_ACTION_ALWAYS or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
                 )
+                menu.findItem(R.id.action_create_playlist)?.isVisible = false
+                menu.findItem(R.id.action_settings)?.isVisible = false
                 return true
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+                val shouldCollapse = !isSearchInProgress()
+                if (shouldCollapse) {
+                    item.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
+                    val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
+                    menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
+                    menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
+                }
                 // Handover back press to `BackPressedDispatcher` if not on a root destination
                 if (navController.previousBackStackEntry != null) {
                     this@MainActivity.onBackPressedDispatcher.onBackPressed()
                 }
 
                 // Suppress collapsing of search when search in progress.
-                return !isSearchInProgress()
+                return shouldCollapse
             }
         })
 
@@ -500,6 +497,11 @@ class MainActivity : AbstractPlayerHostActivity() {
         if (intent?.getBooleanExtra(IntentData.OPEN_DOWNLOADS, false) == true) {
             navController.navigate(R.id.downloadsFragment)
             return
+        }
+
+        if (intent?.getBooleanExtra("open_watch_history", false) == true) {
+            intent?.removeExtra("open_watch_history")
+            navController.navigate(R.id.watchHistoryFragment)
         }
 
         // Handle navigation from app shortcuts (Home, Trends, etc.)

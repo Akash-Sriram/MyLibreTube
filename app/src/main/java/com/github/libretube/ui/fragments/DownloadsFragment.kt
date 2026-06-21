@@ -318,7 +318,7 @@ class DownloadsFragmentPage : DynamicLayoutManagerFragment(R.layout.fragment_dow
 
         playerViewModel.isMiniPlayerVisible.observe(viewLifecycleOwner) { isMiniPlayerVisible ->
             binding.shuffleAll.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = (if (isMiniPlayerVisible) 64f else 16f).dpToPx()
+                bottomMargin = (if (isMiniPlayerVisible) 94f else 16f).dpToPx()
             }
         }
     }

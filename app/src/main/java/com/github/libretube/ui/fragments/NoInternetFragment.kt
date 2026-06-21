@@ -24,8 +24,6 @@ class NoInternetFragment: Fragment(R.layout.fragment_nointernet) {
             }
         }
 
-        binding.downloads.setOnClickListener {
-            findNavController().navigate(R.id.downloadsFragment)
-        }
+
     }
 }

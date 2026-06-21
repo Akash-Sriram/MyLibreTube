@@ -56,9 +56,9 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
         super.onViewCreated(view, savedInstanceState)
 
         commonPlayerViewModel.isMiniPlayerVisible.observe(viewLifecycleOwner) { isMiniPlayerVisible ->
-            _binding?.watchHistoryRecView?.updatePadding(bottom = if (isMiniPlayerVisible) 64f.dpToPx() else 0)
+            _binding?.watchHistoryRecView?.updatePadding(bottom = if (isMiniPlayerVisible) 78f.dpToPx() else 0)
             _binding?.playAll?.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = (if (isMiniPlayerVisible) 64f else 16f).dpToPx()
+                bottomMargin = (if (isMiniPlayerVisible) 94f else 16f).dpToPx()
             }
         }
 

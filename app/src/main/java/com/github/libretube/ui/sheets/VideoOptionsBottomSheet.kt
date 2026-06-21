@@ -52,8 +52,7 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
             optionsList += getOptionsForNotActivePlayback(videoId)
         }
 
-        optionsList += listOf(R.string.addToPlaylist, R.string.download, R.string.share)
-        if (streamItem.isLive) optionsList.remove(R.string.download)
+        optionsList += listOf(R.string.addToPlaylist, R.string.share)
 
         setSimpleItems(optionsList.map { getString(it) }) { which ->
             when (optionsList[which]) {
@@ -63,7 +62,7 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
                         requireContext(),
                         playerData = PlayerData(
                             videoId = videoId,
-                            playlistId = playlistId,
+                            timestamp = 0L
                         ),
                         audioOnlyPlayerRequested = true
                     )
@@ -75,14 +74,6 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
                     }.show(
                         parentFragmentManager,
                         AddToPlaylistDialog::class.java.name
-                    )
-                }
-
-                R.string.download -> {
-                    DownloadHelper.startDownloadDialog(
-                        requireContext(),
-                        parentFragmentManager,
-                        videoId
                     )
                 }
 

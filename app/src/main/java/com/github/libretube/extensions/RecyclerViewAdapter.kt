@@ -36,6 +36,18 @@ fun RecyclerView.setActionListener(
             if (allowDrag) ItemTouchHelper.UP or ItemTouchHelper.DOWN else 0,
             if (allowSwipe) ItemTouchHelper.LEFT else 0
         ) {
+            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
+                return 0.8f // Require swiping at least 80% of the item's width to trigger dismissal
+            }
+
+            override fun getSwipeEscapeVelocity(defaultValue: Float): Float {
+                return defaultValue * 5f // Require 5x speed flick to trigger dismissal by velocity
+            }
+
+            override fun getSwipeVelocityThreshold(defaultValue: Float): Float {
+                return defaultValue * 0.2f // Decrease sensitivity to slow/gentle slides
+            }
+
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,

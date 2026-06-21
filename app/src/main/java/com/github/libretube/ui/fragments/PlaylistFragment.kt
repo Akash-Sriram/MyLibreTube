@@ -107,7 +107,7 @@ class PlaylistFragment : DynamicLayoutManagerFragment(R.layout.fragment_playlist
         updateBookmarkRes()
 
         commonPlayerViewModel.isMiniPlayerVisible.observe(viewLifecycleOwner) {
-            binding.playlistRecView.updatePadding(bottom = if (it) 64f.dpToPx() else 0)
+            binding.playlistRecView.updatePadding(bottom = if (it) 78f.dpToPx() else 0)
         }
 
         // manually restore the recyclerview state due to https://github.com/material-components/material-components-android/issues/3473

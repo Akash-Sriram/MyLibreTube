@@ -33,6 +33,7 @@ import com.github.libretube.ui.base.DynamicLayoutManagerFragment
 import com.github.libretube.ui.dialogs.CreatePlaylistDialog
 import com.github.libretube.ui.dialogs.CreatePlaylistDialog.Companion.CREATE_PLAYLIST_DIALOG_REQUEST_KEY
 import com.github.libretube.ui.models.CommonPlayerViewModel
+import com.github.libretube.ui.activities.MainActivity
 import com.github.libretube.ui.sheets.BaseBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,30 +69,11 @@ class LibraryFragment : DynamicLayoutManagerFragment(R.layout.fragment_library) 
         })
         binding.playlistRecView.adapter = playlistsAdapter
 
-        // listen for the mini player state changing
-        commonPlayerViewModel.isMiniPlayerVisible.observe(viewLifecycleOwner) {
-            updateFABMargin(it)
-        }
 
-        // hide watch history button of history disabled
-        val watchHistoryEnabled =
-            PreferenceHelper.getBoolean(PreferenceKeys.WATCH_HISTORY_TOGGLE, true)
-        if (!watchHistoryEnabled) {
-            binding.watchHistory.isGone = true
-        } else {
-            binding.watchHistory.setOnClickListener {
-                findNavController().navigate(R.id.action_libraryFragment_to_watchHistoryFragment)
-            }
-        }
 
-        binding.downloads.setOnClickListener {
-            findNavController().navigate(R.id.action_libraryFragment_to_downloadsFragment)
-        }
 
-        val navBarItems = NavBarHelper.getNavBarItems(requireContext())
-        if (navBarItems.filter { it.isVisible }.any { it.itemId == R.id.downloadsFragment }) {
-            binding.downloads.isGone = true
-        }
+
+
 
         fetchPlaylists()
         initBookmarks()
@@ -111,9 +93,10 @@ class LibraryFragment : DynamicLayoutManagerFragment(R.layout.fragment_library) 
                 fetchPlaylists()
             }
         }
-        binding.createPlaylist.setOnClickListener {
-            CreatePlaylistDialog()
-                .show(childFragmentManager, CreatePlaylistDialog::class.java.name)
+        binding.searchFab.setOnClickListener {
+            val mainActivity = (activity as? MainActivity)
+            mainActivity?.searchItem?.isVisible = true
+            mainActivity?.searchItem?.expandActionView()
         }
 
         val sortOptions = resources.getStringArray(R.array.playlistSortingOptions)
@@ -157,12 +140,7 @@ class LibraryFragment : DynamicLayoutManagerFragment(R.layout.fragment_library) 
         }
     }
 
-    private fun updateFABMargin(isMiniPlayerVisible: Boolean) {
-        // optimize CreatePlaylistFab bottom margin if miniPlayer active
-        binding.createPlaylist.updateLayoutParams<MarginLayoutParams> {
-            bottomMargin = (if (isMiniPlayerVisible) 64f else 16f).dpToPx()
-        }
-    }
+
 
     private fun fetchPlaylists() {
         _binding?.playlistRefresh?.isRefreshing = true

@@ -19,10 +19,7 @@
         android:name="com.github.libretube.ui.preferences.GeneralSettings"
         android:label="@string/general" />
 
-    <fragment
-        android:id="@+id/appearanceSettings"
-        android:name="com.github.libretube.ui.preferences.AppearanceSettings"
-        android:label="@string/appearance" />
+
     <fragment
         android:id="@+id/audioVideoSettings"
         android:name="com.github.libretube.ui.preferences.AudioVideoSettings"
@@ -64,13 +61,7 @@
         app:popEnterAnim="@animator/nav_default_pop_enter_anim"
         app:popExitAnim="@animator/nav_default_pop_exit_anim" />
 
-    <action
-        android:id="@+id/action_global_appearanceSettings"
-        app:destination="@id/appearanceSettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
+
 
     <action
         android:id="@+id/action_global_audioVideoSettings"

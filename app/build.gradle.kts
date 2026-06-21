@@ -38,6 +38,7 @@ android {
         versionName = "31.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "LibreTube")
+        resourceConfigurations.add("en")
     }
 
     ksp {

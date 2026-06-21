@@ -11,7 +11,8 @@
         android:id="@+id/audio_player_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorSurfaceContainer"
+        android:background="@drawable/mini_player_bg"
+        android:clipToOutline="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -316,7 +317,7 @@
     <LinearLayout
         android:id="@+id/miniPlayerControls"
         android:layout_width="match_parent"
-        android:layout_height="54dp"
+        android:layout_height="68dp"
         android:alpha="0"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/audio_player_container"
@@ -326,9 +327,10 @@
 
         <ImageView
             android:id="@+id/miniPlayerThumbnail"
-            android:layout_width="96dp"
+            android:layout_width="68dp"
             android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerCrop"
             android:padding="8dp" />
 
         <TextView
@@ -344,20 +346,22 @@
 
         <ImageView
             android:id="@+id/miniPlayerPause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp"
+            android:padding="10dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_pause" />
 
         <ImageView
             android:id="@+id/miniPlayerClose"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp"
+            android:padding="10dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_close" />
 
     </LinearLayout>

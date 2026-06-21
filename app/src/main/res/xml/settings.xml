@@ -9,17 +9,9 @@
         app:title="@string/general" />
 
 
-    <Preference
-        android:icon="@drawable/ic_color"
-        app:key="appearance"
-        app:summary="@string/appearance_summary"
-        app:title="@string/appearance" />
 
-    <Preference
-        android:icon="@drawable/ic_block"
-        app:key="sponsorblock"
-        app:summary="@string/sponsorblock_summary"
-        app:title="@string/sponsorblock" />
+
+
 
     <Preference
         android:icon="@drawable/ic_play_filled"
@@ -27,11 +19,12 @@
         app:summary="@string/player_summary"
         app:title="@string/player" />
 
+
+
     <Preference
-        android:icon="@drawable/ic_movie"
-        app:key="audio_video"
-        app:summary="@string/audio_video_summary"
-        app:title="@string/audio_video" />
+        android:icon="@drawable/ic_time_outlined"
+        app:key="view_watch_history"
+        app:title="@string/watch_history" />
 
     <Preference
         android:icon="@drawable/ic_history_filled"
@@ -39,11 +32,7 @@
         app:key="history"
         app:title="@string/history" />
 
-    <Preference
-        android:icon="@drawable/ic_notification"
-        android:summary="@string/notify_new_streams"
-        app:key="notifications"
-        app:title="@string/notifications" />
+
 
     <Preference
         android:icon="@drawable/ic_backup"

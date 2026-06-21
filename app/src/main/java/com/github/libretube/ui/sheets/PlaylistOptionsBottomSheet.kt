@@ -49,7 +49,7 @@ class PlaylistOptionsBottomSheet : BaseBottomSheet() {
         setTitle(playlistName)
 
         // options for the dialog
-        val optionsList = mutableListOf(R.string.playOnBackground, R.string.download)
+        val optionsList = mutableListOf(R.string.playOnBackground)
 
         if (PlayingQueue.isNotEmpty()) optionsList.add(R.string.add_to_queue)
 
@@ -146,15 +146,7 @@ class PlaylistOptionsBottomSheet : BaseBottomSheet() {
                     newPlaylistDescriptionDialog.show(mFragmentManager, null)
                 }
 
-                R.string.download -> {
-                    DownloadHelper.startDownloadPlaylistDialog(
-                        requireContext(),
-                        mFragmentManager,
-                        playlistId,
-                        playlistName,
-                        playlistType
-                    )
-                }
+
 
                 R.string.export_playlist -> {
                     val context = requireContext()

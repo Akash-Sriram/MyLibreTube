@@ -23,18 +23,7 @@ import java.util.Locale
 open class BaseActivity : AppCompatActivity() {
     open val isDialogActivity: Boolean = false
 
-    val screenOrientationPref by lazy {
-        val orientationPref = PreferenceHelper.getString(
-            PreferenceKeys.ORIENTATION,
-            resources.getString(R.string.config_default_orientation_pref)
-        )
-        when (orientationPref) {
-            "portrait" -> ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
-            "landscape" -> ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
-            "auto" -> ActivityInfo.SCREEN_ORIENTATION_USER
-            else -> throw IllegalArgumentException()
-        }
-    }
+    val screenOrientationPref = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
 
     /**
      * Whether the phone of the user has a cutout like a notch or not

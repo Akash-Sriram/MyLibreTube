@@ -1005,7 +1005,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
                 override fun onTransitionCompleted(motionLayout: MotionLayout?, currentId: Int) {
                     super.onTransitionCompleted(motionLayout, currentId)
 
-                    baseActivity.supportFragmentManager.commit {
+                    baseActivity.supportFragmentManager.commit(allowStateLoss = true) {
                         remove(this@PlayerFragment)
                     }
                 }
@@ -1013,7 +1013,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
 
             unsetFullscreen()
         } else {
-            baseActivity.supportFragmentManager.commit {
+            baseActivity.supportFragmentManager.commit(allowStateLoss = true) {
                 remove(this@PlayerFragment)
             }
         }

@@ -120,13 +120,7 @@ object NavBarHelper {
     }
 
     fun getStartFragmentId(context: Context): Int {
-        val pref = PreferenceHelper.getInt(PreferenceKeys.START_FRAGMENT, Int.MAX_VALUE)
-        val defaultNavItems = getDefaultNavBarItems(context)
-        return if (pref == Int.MAX_VALUE) {
-            getNavBarItems(context).firstOrNull { it.isVisible }?.itemId ?: R.id.homeFragment
-        } else {
-            defaultNavItems[pref].itemId
-        }
+        return R.id.libraryFragment
     }
 
     fun setStartFragment(context: Context, itemId: Int) {
