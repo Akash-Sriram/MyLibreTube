@@ -304,6 +304,9 @@ class MainActivity : AbstractPlayerHostActivity() {
         val searchItem = menu.findItem(R.id.action_search)
         this.searchItem = searchItem
         searchView = searchItem.actionView as SearchView
+        val innerSearchIcon = searchView.findViewById<android.widget.ImageView>(androidx.appcompat.R.id.search_mag_icon)
+        innerSearchIcon?.setImageDrawable(null)
+        innerSearchIcon?.visibility = View.GONE
 
         // automatically set a different search icon in the playlists
         navController.addOnDestinationChangedListener { _, destination, _ ->
