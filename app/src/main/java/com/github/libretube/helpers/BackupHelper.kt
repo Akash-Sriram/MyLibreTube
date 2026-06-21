@@ -61,13 +61,25 @@ object BackupHelper {
         Database.playlistBookmarkDao().insertAll(backupFile.playlistBookmarks.orEmpty())
         Database.subscriptionGroupsDao().insertAll(backupFile.groups.orEmpty())
 
-        backupFile.localPlaylists?.forEach {
-            // the playlist will be created with an id of 0, so that Room will auto generate a
-            // new playlist id to avoid conflicts with existing local playlists
-            val playlistId = Database.localPlaylistsDao().createPlaylist(it.playlist.copy(id = 0))
-            it.videos.forEach { playlistItem ->
-                playlistItem.playlistId = playlistId.toInt()
-                Database.localPlaylistsDao().addPlaylistVideo(playlistItem.copy(id = 0))
+        val currentPlaylists = Database.localPlaylistsDao().getAll()
+        backupFile.localPlaylists?.forEach { backupPlaylist ->
+            val existing = currentPlaylists.find { it.playlist.name == backupPlaylist.playlist.name }
+            if (existing != null) {
+                // Merge videos to avoid duplicates in existing playlist
+                val existingVideoIds = existing.videos.map { it.videoId }.toSet()
+                backupPlaylist.videos.forEach { playlistItem ->
+                    if (playlistItem.videoId !in existingVideoIds) {
+                        playlistItem.playlistId = existing.playlist.id
+                        Database.localPlaylistsDao().addPlaylistVideo(playlistItem.copy(id = 0))
+                    }
+                }
+            } else {
+                // Create a new playlist and add all videos
+                val playlistId = Database.localPlaylistsDao().createPlaylist(backupPlaylist.playlist.copy(id = 0))
+                backupPlaylist.videos.forEach { playlistItem ->
+                    playlistItem.playlistId = playlistId.toInt()
+                    Database.localPlaylistsDao().addPlaylistVideo(playlistItem.copy(id = 0))
+                }
             }
         }
 
@@ -81,9 +93,6 @@ object BackupHelper {
         if (preferences == null) return
 
         PreferenceManager.getDefaultSharedPreferences(context).edit(commit = true) {
-            // clear the previous settings
-            clear()
-
             // decide for each preference which type it is and save it to the preferences
             preferences.forEach { (key, jsonValue) ->
                 val value = if (jsonValue.isString) {
