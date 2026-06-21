@@ -42,12 +42,6 @@ import kotlinx.serialization.json.longOrNull
 object BackupHelper {
     private const val AUTO_BACKUP_WORK_NAME = "AutoBackupService"
 
-    data class AutoBackupItem(
-        val name: String,
-        val localFile: File?,
-        val documentFile: DocumentFile?
-    )
-
     /**
      * Enqueue the daily auto-backup background work
      */
@@ -95,40 +89,6 @@ object BackupHelper {
             Log.e(TAG(), "Error getting backup folder: $e")
             null
         }
-    }
-
-    /**
-     * Retrieve all available auto backups from local storage and chosen SAF folder
-     */
-    fun getAutoBackups(context: Context): List<AutoBackupItem> {
-        val list = mutableListOf<AutoBackupItem>()
-
-        // 1. Check internal fallback
-        val autoBackupDir = context.filesDir.resolve("auto_backups")
-        if (autoBackupDir.exists()) {
-            val internalFiles = autoBackupDir.listFiles { _, name ->
-                name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
-            }
-            internalFiles?.forEach { file ->
-                list.add(AutoBackupItem(file.name, file, null))
-            }
-        }
-
-        // 2. Check user chosen folder
-        val folder = getBackupFolder(context)
-        if (folder != null && folder.exists() && folder.canRead()) {
-            val files = folder.listFiles()
-            files.forEach { file ->
-                val name = file.name.orEmpty()
-                if (name.startsWith("libretube-auto-backup-") && name.endsWith(".json")) {
-                    list.add(AutoBackupItem(name, null, file))
-                }
-            }
-        }
-
-        // Sort descending by name (timestamp) to show newest first
-        list.sortByDescending { it.name }
-        return list
     }
 
     /**
@@ -256,28 +216,6 @@ object BackupHelper {
         } ?: return@withContext
 
         restoreBackupFile(context, backupFile)
-    }
-
-    /**
-     * Restore database and preferences from a local AutoBackupItem
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun restoreFromAutoBackupItem(context: Context, item: AutoBackupItem) = withContext(Dispatchers.IO) {
-        val backupFile = if (item.localFile != null) {
-            item.localFile.inputStream().use {
-                JsonHelper.json.decodeFromStream<BackupFile>(it)
-            }
-        } else if (item.documentFile != null) {
-            context.contentResolver.openInputStream(item.documentFile.uri)?.use {
-                JsonHelper.json.decodeFromStream<BackupFile>(it)
-            }
-        } else {
-            null
-        }
-
-        if (backupFile != null) {
-            restoreBackupFile(context, backupFile)
-        }
     }
 
     /**

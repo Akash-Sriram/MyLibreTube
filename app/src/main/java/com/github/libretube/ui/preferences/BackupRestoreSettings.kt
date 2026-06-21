@@ -125,6 +125,7 @@ class BackupRestoreSettings : BasePreferenceFragment() {
         }
 
         val advancedBackup = findPreference<Preference>("backup")
+        @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
         advancedBackup?.setOnPreferenceClickListener {
             val folder = BackupHelper.getBackupFolder(requireContext())
             if (folder != null && folder.exists() && folder.canWrite()) {
@@ -154,39 +155,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
             true
         }
 
-        val restoreAutoBackup = findPreference<Preference>("restore_auto")
-        restoreAutoBackup?.setOnPreferenceClickListener {
-            val autoBackups = BackupHelper.getAutoBackups(requireContext())
-            if (autoBackups.isEmpty()) {
-                lifecycleScope.launch {
-                    requireContext().toastFromMainDispatcher(R.string.no_auto_backups_found)
-                }
-            } else {
-                val fileNames = autoBackups.map { item ->
-                    val timestampPart = item.name
-                        .removePrefix("libretube-auto-backup-")
-                        .removeSuffix(".json")
-                    timestampPart
-                }.toTypedArray()
-
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(R.string.choose_auto_backup)
-                    .setItems(fileNames) { _, which ->
-                        val selectedItem = autoBackups[which]
-                        CoroutineScope(Dispatchers.IO).launch {
-                            BackupHelper.restoreFromAutoBackupItem(requireContext().applicationContext, selectedItem)
-                            withContext(Dispatchers.Main) {
-                                runCatching {
-                                    RequireRestartDialog().show(childFragmentManager, this::class.java.name)
-                                }
-                            }
-                        }
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
-            }
-            true
-        }
     }
 
     override fun onResume() {

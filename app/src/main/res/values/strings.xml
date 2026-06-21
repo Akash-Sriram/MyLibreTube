@@ -367,9 +367,6 @@
     <string name="backup_folder">Set backup folder</string>
     <string name="backup_folder_summary_not_set">Choose a folder to store automatic and manual backups</string>
     <string name="backup_folder_summary_set">Backup folder: %s</string>
-    <string name="restore_auto_backup">Restore from auto-backup</string>
-    <string name="no_auto_backups_found">No automatic backups found</string>
-    <string name="choose_auto_backup">Choose a backup to restore</string>
     <string name="backup_created_success_folder">Backup saved to folder</string>
     <string name="backup_restore_summary">Import and export subscriptions, playlists, …</string>
     <string name="exportsuccess">Exported.</string>

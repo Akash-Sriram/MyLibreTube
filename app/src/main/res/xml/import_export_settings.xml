@@ -37,10 +37,6 @@
             app:key="restore"
             app:title="@string/restore" />
 
-        <Preference
-            android:icon="@drawable/ic_restore"
-            app:key="restore_auto"
-            app:title="@string/restore_auto_backup" />
 
     </PreferenceCategory>
 
