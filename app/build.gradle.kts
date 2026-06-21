@@ -29,7 +29,7 @@ if (keystoreFileExists) {
 
 fun getVersionName(): String {
     return try {
-        val process = Runtime.getRuntime().exec("git describe --tags --always")
+        val process = Runtime.getRuntime().exec("git describe --tags --match v[0-9]* --always")
         process.inputStream.bufferedReader().readText().trim().removePrefix("v")
     } catch (e: Exception) {
         "31.4"

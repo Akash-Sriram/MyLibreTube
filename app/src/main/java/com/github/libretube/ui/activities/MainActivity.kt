@@ -426,20 +426,17 @@ class MainActivity : AbstractPlayerHostActivity() {
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-                val shouldCollapse = !isSearchInProgress()
-                if (shouldCollapse) {
-                    item.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
-                    val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
-                    menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
-                    menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
-                }
+                item.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
+                val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
+                menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
+                menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
+
                 // Handover back press to `BackPressedDispatcher` if not on a root destination and we are in ONLINE search mode
                 if (currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
                     this@MainActivity.onBackPressedDispatcher.onBackPressed()
                 }
 
-                // Suppress collapsing of search when search in progress.
-                return shouldCollapse
+                return true
             }
         })
 
