@@ -8,8 +8,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.github.libretube.R
 import com.github.libretube.api.JsonHelper
 import com.github.libretube.api.PlaylistsHelper
-import com.github.libretube.api.SubscriptionHelper
-import com.github.libretube.db.DatabaseHelper
 import com.github.libretube.db.obj.WatchHistoryItem
 import com.github.libretube.enums.ImportFormat
 import com.github.libretube.extensions.TAG
@@ -17,20 +15,17 @@ import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.toastFromMainDispatcher
 import com.github.libretube.obj.FreeTubeImportPlaylist
 import com.github.libretube.obj.FreeTubeVideo
-import com.github.libretube.obj.FreetubeSubscription
-import com.github.libretube.obj.FreetubeSubscriptions
-import com.github.libretube.obj.NewPipeSubscription
-import com.github.libretube.obj.NewPipeSubscriptions
 import com.github.libretube.obj.PipedImportPlaylist
 import com.github.libretube.obj.PipedPlaylistFile
-import com.github.libretube.obj.YouTubeWatchHistoryFileItem
 import com.github.libretube.ui.dialogs.ShareDialog.Companion.YOUTUBE_FRONTEND_URL
 import com.github.libretube.util.TextUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
-import java.util.stream.Collectors
 
 object ImportHelper {
     private const val IMPORT_THUMBNAIL_QUALITY = "mqdefault"
@@ -39,107 +34,6 @@ object ImportHelper {
 
     // format: playlistName-videos.csv, where "videos" could also be i18ned to a different language
     private val csvPlaylistNameRegex = Regex("""(.*)-(\w+)\.csv""")
-
-    /**
-     * Import subscriptions by a file uri
-     */
-    suspend fun importSubscriptions(context: Context, uri: Uri, importFormat: ImportFormat) {
-        try {
-            SubscriptionHelper.importSubscriptions(getChannelsFromUri(context, uri, importFormat))
-            context.toastFromMainDispatcher(R.string.importsuccess)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG(), e.toString())
-            val type = context.contentResolver.getType(uri)
-            val message = context.getString(R.string.unsupported_file_format, type)
-            context.toastFromMainDispatcher(message)
-        } catch (e: Exception) {
-            Log.e(TAG(), e.toString())
-            e.localizedMessage?.let {
-                context.toastFromMainDispatcher(it)
-            }
-        }
-    }
-
-    /**
-     * Get a list of channel IDs from a file [Uri]
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun getChannelsFromUri(
-        context: Context,
-        uri: Uri,
-        importFormat: ImportFormat
-    ): List<String> {
-        return when (importFormat) {
-            ImportFormat.NEWPIPE -> {
-                val subscriptions = context.contentResolver.openInputStream(uri)?.use {
-                    JsonHelper.json.decodeFromStream<NewPipeSubscriptions>(it)
-                }
-                subscriptions?.subscriptions.orEmpty().map {
-                    it.url.replace("$YOUTUBE_FRONTEND_URL/channel/", "")
-                }
-            }
-
-            ImportFormat.FREETUBE -> {
-                val subscriptions = context.contentResolver.openInputStream(uri)?.use {
-                    JsonHelper.json.decodeFromStream<FreetubeSubscriptions>(it)
-                }
-                subscriptions?.subscriptions.orEmpty().map {
-                    it.url.replace("$YOUTUBE_FRONTEND_URL/channel/", "")
-                }
-            }
-
-            ImportFormat.YOUTUBECSV -> {
-                // import subscriptions from Google/YouTube Takeout
-                context.contentResolver.openInputStream(uri)?.use {
-                    it.bufferedReader().use { reader ->
-                        reader.lines().map { line -> line.substringBefore(",") }
-                            .filter { channelId -> channelId.length == 24 }
-                            .collect(Collectors.toList())
-                    }
-                }.orEmpty()
-            }
-
-            else -> throw IllegalArgumentException()
-        }
-    }
-
-    /**
-     * Write the text to the document
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun exportSubscriptions(context: Context, uri: Uri, importFormat: ImportFormat) {
-        val subs = SubscriptionHelper.getSubscriptions()
-
-        when (importFormat) {
-            ImportFormat.NEWPIPE -> {
-                val newPipeChannels = subs.map {
-                    NewPipeSubscription(it.name, 0, "$YOUTUBE_FRONTEND_URL/channel/${it.url}")
-                }
-                val newPipeSubscriptions = NewPipeSubscriptions(subscriptions = newPipeChannels)
-                context.contentResolver.openOutputStream(uri)?.use {
-                    JsonHelper.json.encodeToStream(newPipeSubscriptions, it)
-                }
-            }
-
-            ImportFormat.FREETUBE -> {
-                val freeTubeChannels = subs.map {
-                    FreetubeSubscription(
-                        it.name,
-                        "",
-                        "$YOUTUBE_FRONTEND_URL/channel/${it.url}"
-                    )
-                }
-                val freeTubeSubscriptions = FreetubeSubscriptions(subscriptions = freeTubeChannels)
-                context.contentResolver.openOutputStream(uri)?.use {
-                    JsonHelper.json.encodeToStream(freeTubeSubscriptions, it)
-                }
-            }
-
-            else -> throw IllegalArgumentException()
-        }
-
-        context.toastFromMainDispatcher(R.string.exportsuccess)
-    }
 
     /**
      * Import Playlists
@@ -344,45 +238,6 @@ object ImportHelper {
             }
 
             else -> Unit
-        }
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun importWatchHistory(context: Context, uri: Uri, importFormat: ImportFormat) {
-        val videos = when (importFormat) {
-            ImportFormat.YOUTUBEJSON -> {
-                context.contentResolver.openInputStream(uri)?.use {
-                    JsonHelper.json.decodeFromStream<List<YouTubeWatchHistoryFileItem>>(it)
-                }
-                    .orEmpty()
-                    .filter { it.activityControls.isNotEmpty() && it.subtitles.isNotEmpty() && it.titleUrl.isNotEmpty() }
-                    .reversed()
-                    .map {
-                        val videoId = it.titleUrl.takeLast(VIDEO_ID_LENGTH)
-
-                        WatchHistoryItem(
-                            videoId = videoId,
-                            title = it.title.replaceFirst("Watched ", ""),
-                            uploader = it.subtitles.firstOrNull()?.name,
-                            uploaderUrl = it.subtitles.firstOrNull()?.url?.let { url ->
-                                url.substring(url.length - 24)
-                            },
-                            thumbnailUrl = "${YOUTUBE_IMG_URL}/vi/${videoId}/${IMPORT_THUMBNAIL_QUALITY}.jpg"
-                        )
-                    }
-            }
-
-            else -> emptyList()
-        }
-
-        for (video in videos) {
-            DatabaseHelper.addToWatchHistory(video)
-        }
-
-        if (videos.isEmpty()) {
-            context.toastFromMainDispatcher(R.string.emptyList)
-        } else {
-            context.toastFromMainDispatcher(R.string.success)
         }
     }
 

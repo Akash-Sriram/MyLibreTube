@@ -54,12 +54,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
         }
     }
 
-    /**
-     * result listeners for importing and exporting subscriptions
-     */
-
-
-
     // result listeners for importing and exporting playlists
     private val getPlaylistsFile =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { files ->
@@ -73,8 +67,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
                 }
             }
         }
-
-
 
     private val createPlaylistsFile =
         registerForActivityResult(CreateDocument(FILETYPE_ANY)) { uri ->
@@ -91,8 +83,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.import_export_settings, rootKey)
-
-
 
         val importPlaylists = findPreference<Preference>("import_playlists")
         importPlaylists?.setOnPreferenceClickListener {
@@ -123,8 +113,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
             true
         }
 
-
-
         childFragmentManager.setFragmentResultListener(
             BACKUP_DIALOG_REQUEST_KEY,
             this
@@ -142,7 +130,7 @@ class BackupRestoreSettings : BasePreferenceFragment() {
 
         val restoreAdvancedBackup = findPreference<Preference>("restore")
         restoreAdvancedBackup?.setOnPreferenceClickListener {
-            getBackupFile.launch(JSON)
+            getBackupFile.launch("*/*")
             true
         }
     }
