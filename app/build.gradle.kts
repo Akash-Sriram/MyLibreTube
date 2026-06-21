@@ -1,4 +1,7 @@
 import java.util.Properties
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.google.protobuf.gradle.id
 
@@ -28,12 +31,9 @@ if (keystoreFileExists) {
 }
 
 fun getVersionName(): String {
-    return try {
-        val process = Runtime.getRuntime().exec("git describe --tags --match v[0-9]* --always")
-        process.inputStream.bufferedReader().readText().trim().removePrefix("v")
-    } catch (e: Exception) {
-        "31.4"
-    }
+    val formatter = SimpleDateFormat("yyyyMMdd-HHmm")
+    formatter.timeZone = TimeZone.getDefault()
+    return "MyLibreTube " + formatter.format(Date())
 }
 
 android {
