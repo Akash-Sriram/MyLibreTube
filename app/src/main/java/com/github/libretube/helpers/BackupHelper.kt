@@ -56,17 +56,29 @@ object BackupHelper {
             .setRequiresStorageNotLow(true)
             .build()
 
+        val currentDate = java.util.Calendar.getInstance()
+        val dueDate = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 2)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+        }
+        if (dueDate.before(currentDate)) {
+            dueDate.add(java.util.Calendar.HOUR_OF_DAY, 24)
+        }
+        val initialDelay = dueDate.timeInMillis - currentDate.timeInMillis
+
         val autoBackupWorker = PeriodicWorkRequestBuilder<AutoBackupWorker>(
             24,
             TimeUnit.HOURS
         )
             .setConstraints(constraints)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(context)
             .enqueueUniquePeriodicWork(
                 AUTO_BACKUP_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 autoBackupWorker
             )
     }
