@@ -32,16 +32,8 @@ class BackupDialog : DialogFragment() {
             it.watchHistory = Database.watchHistoryDao().getAll()
         })
 
-        data object WatchPositions : BackupOption(R.string.watch_positions, onSelected = {
-            it.watchPositions = Database.watchPositionDao().getAll()
-        })
-
         data object SearchHistory : BackupOption(R.string.search_history, onSelected = {
             it.searchHistory = Database.searchHistoryDao().getAll()
-        })
-
-        data object LocalSubscriptions : BackupOption(R.string.local_subscriptions, onSelected = {
-            it.subscriptions = Database.localSubscriptionDao().getAll()
         })
 
 
@@ -85,9 +77,7 @@ class BackupDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val backupOptions = listOf(
             BackupOption.WatchHistory,
-            BackupOption.WatchPositions,
             BackupOption.SearchHistory,
-            BackupOption.LocalSubscriptions,
             BackupOption.PlaylistBookmarks,
             BackupOption.LocalPlaylists,
             BackupOption.Preferences
