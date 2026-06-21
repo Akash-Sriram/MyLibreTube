@@ -53,7 +53,7 @@ object UpdateHelper {
                 val cleanTagName = tagName.removePrefix("v").trim()
                 val currentVersion = BuildConfig.VERSION_NAME.removePrefix("v").trim()
 
-                if (cleanTagName == currentVersion) {
+                if (!isUpdateAvailable(currentVersion, cleanTagName)) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(appContext, "App is up to date ($currentVersion)", Toast.LENGTH_SHORT).show()
                     }
@@ -71,6 +71,23 @@ object UpdateHelper {
                 }
             }
         }
+    }
+
+    private fun isUpdateAvailable(current: String, latest: String): Boolean {
+        val currentClean = current.substringBefore("-").trim()
+        val latestClean = latest.substringBefore("-").trim()
+        
+        val currentParts = currentClean.split(".").mapNotNull { it.toIntOrNull() }
+        val latestParts = latestClean.split(".").mapNotNull { it.toIntOrNull() }
+        
+        val maxLength = maxOf(currentParts.size, latestParts.size)
+        for (i in 0 until maxLength) {
+            val currentPart = currentParts.getOrElse(i) { 0 }
+            val latestPart = latestParts.getOrElse(i) { 0 }
+            if (latestPart > currentPart) return true
+            if (currentPart > latestPart) return false
+        }
+        return false
     }
 
     private fun startDownload(context: Context, url: String, tagName: String) {
