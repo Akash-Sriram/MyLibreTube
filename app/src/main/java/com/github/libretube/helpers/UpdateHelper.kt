@@ -80,6 +80,12 @@ object UpdateHelper {
         val currentParts = currentClean.split(".").mapNotNull { it.toIntOrNull() }
         val latestParts = latestClean.split(".").mapNotNull { it.toIntOrNull() }
         
+        // If the current version cannot be parsed into semantic numbers (e.g., it is just a commit hash),
+        // we treat it as a developer/debug build and suppress update prompts.
+        if (currentParts.isEmpty()) {
+            return false
+        }
+        
         val maxLength = maxOf(currentParts.size, latestParts.size)
         for (i in 0 until maxLength) {
             val currentPart = currentParts.getOrElse(i) { 0 }
