@@ -433,8 +433,8 @@ class MainActivity : AbstractPlayerHostActivity() {
                     menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
                     menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
                 }
-                // Handover back press to `BackPressedDispatcher` if not on a root destination
-                if (navController.previousBackStackEntry != null) {
+                // Handover back press to `BackPressedDispatcher` if not on a root destination and we are in ONLINE search mode
+                if (currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
                     this@MainActivity.onBackPressedDispatcher.onBackPressed()
                 }
 
