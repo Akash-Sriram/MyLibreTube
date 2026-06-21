@@ -13,8 +13,6 @@ import com.github.libretube.enums.ImportFormat
 import com.github.libretube.extensions.TAG
 import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.toastFromMainDispatcher
-import com.github.libretube.obj.FreeTubeImportPlaylist
-import com.github.libretube.obj.FreeTubeVideo
 import com.github.libretube.obj.PipedImportPlaylist
 import com.github.libretube.obj.PipedPlaylistFile
 import com.github.libretube.ui.dialogs.ShareDialog.Companion.YOUTUBE_FRONTEND_URL
@@ -53,32 +51,6 @@ object ImportHelper {
                 importPlaylists.forEach { playlist ->
                     playlist.videos = playlist.videos.map { it.takeLast(VIDEO_ID_LENGTH) }
                 }
-            }
-
-            ImportFormat.FREETUBE -> {
-                val playlistFile =
-                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                        val text = inputStream.bufferedReader().readText()
-                        runCatching {
-                            text.lines().filter { it.isNotEmpty() }.map { line ->
-                                JsonHelper.json.decodeFromString<FreeTubeImportPlaylist>(line)
-                            }
-                        }.getOrNull() ?: runCatching {
-                            listOf(JsonHelper.json.decodeFromString<FreeTubeImportPlaylist>(text))
-                        }.getOrNull()
-                    }
-
-                val playlists = playlistFile.orEmpty().map { playlist ->
-                    // convert FreeTube videos to list of string
-                    // convert FreeTube playlists to piped playlists
-                    PipedImportPlaylist(
-                        playlist.name,
-                        null,
-                        null,
-                        playlist.videos.map { it.videoId }
-                    )
-                }
-                importPlaylists.addAll(playlists)
             }
 
             ImportFormat.YOUTUBECSV -> {
@@ -193,27 +165,7 @@ object ImportHelper {
                 context.toastFromMainDispatcher(R.string.exportsuccess)
             }
 
-            ImportFormat.FREETUBE -> {
-                val freeTubeExportDb = playlists.map { playlist ->
-                    val videos = playlist.relatedStreams.map { videoInfo ->
-                        FreeTubeVideo(
-                            videoId = videoInfo.url.orEmpty().toID(),
-                            title = videoInfo.title.orEmpty(),
-                            author = videoInfo.uploaderName.orEmpty(),
-                            authorId = videoInfo.uploaderUrl.orEmpty().toID(),
-                            lengthSeconds = videoInfo.duration ?: 0L
-                        )
-                    }
-                    FreeTubeImportPlaylist(playlist.name.orEmpty(), videos)
-                }.joinToString("\n") { playlist ->
-                    JsonHelper.json.encodeToString(playlist)
-                }
 
-                context.contentResolver.openOutputStream(uri)?.use {
-                    it.write(freeTubeExportDb.toByteArray())
-                }
-                context.toastFromMainDispatcher(R.string.exportsuccess)
-            }
 
             ImportFormat.URLSORIDS -> {
                 val urlListExport = playlists
