@@ -44,9 +44,7 @@ class BackupDialog : DialogFragment() {
             it.subscriptions = Database.localSubscriptionDao().getAll()
         })
 
-        data object CustomInstances : BackupOption(R.string.backup_customInstances, onSelected = {
-            it.customInstances = Database.customInstanceDao().getAll()
-        })
+
 
         data object PlaylistBookmarks : BackupOption(R.string.bookmarks, onSelected = {
             it.playlistBookmarks = Database.playlistBookmarkDao().getAll()
@@ -70,10 +68,6 @@ class BackupDialog : DialogFragment() {
             }
         })
 
-        data object SubscriptionGroups : BackupOption(R.string.channel_groups, onSelected = {
-            it.groups = Database.subscriptionGroupsDao().getAll()
-        })
-
         data object Preferences : BackupOption(R.string.preferences, onSelected = { file ->
             file.preferences = PreferenceHelper.settings.all.map { (key, value) ->
                 val jsonValue = when (value) {
@@ -94,10 +88,8 @@ class BackupDialog : DialogFragment() {
             BackupOption.WatchPositions,
             BackupOption.SearchHistory,
             BackupOption.LocalSubscriptions,
-            BackupOption.CustomInstances,
             BackupOption.PlaylistBookmarks,
             BackupOption.LocalPlaylists,
-            BackupOption.SubscriptionGroups,
             BackupOption.Preferences
         )
 
