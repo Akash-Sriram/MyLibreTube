@@ -38,7 +38,6 @@ class MainSettings : BasePreferenceFragment() {
                 putExtra("open_watch_history", true)
             }
             startActivity(mainIntent)
-            activity?.finish()
             true
         }
         

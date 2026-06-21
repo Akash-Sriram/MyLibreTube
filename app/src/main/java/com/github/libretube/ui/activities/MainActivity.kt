@@ -508,7 +508,10 @@ class MainActivity : AbstractPlayerHostActivity() {
 
         if (intent?.getBooleanExtra("open_watch_history", false) == true) {
             intent?.removeExtra("open_watch_history")
-            navController.navigate(R.id.watchHistoryFragment)
+            val bundle = android.os.Bundle().apply {
+                putBoolean("from_settings", true)
+            }
+            navController.navigate(R.id.watchHistoryFragment, bundle)
         }
 
         // Handle navigation from app shortcuts (Home, Trends, etc.)

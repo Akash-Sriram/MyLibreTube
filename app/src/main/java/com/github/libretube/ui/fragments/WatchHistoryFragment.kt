@@ -1,6 +1,10 @@
 package com.github.libretube.ui.fragments
 
+import android.content.Intent
 import android.content.res.Configuration
+import androidx.activity.OnBackPressedCallback
+import androidx.navigation.fragment.findNavController
+import com.github.libretube.ui.activities.SettingsActivity
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.View
@@ -169,6 +173,20 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
             }
         }
 
+        val fromSettings = arguments?.getBoolean("from_settings", false) == true
+        if (fromSettings) {
+            val callback = object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    val settingsIntent = Intent(requireContext(), SettingsActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    startActivity(settingsIntent)
+                    isEnabled = false
+                    findNavController().popBackStack()
+                }
+            }
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
