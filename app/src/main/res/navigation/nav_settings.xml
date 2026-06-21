@@ -20,10 +20,7 @@
         android:label="@string/general" />
 
 
-    <fragment
-        android:id="@+id/audioVideoSettings"
-        android:name="com.github.libretube.ui.preferences.AudioVideoSettings"
-        android:label="@string/audio_video" />
+
     <fragment
         android:id="@+id/backupRestoreSettings"
         android:name="com.github.libretube.ui.preferences.BackupRestoreSettings"
@@ -40,10 +37,7 @@
         android:id="@+id/playerSettings"
         android:name="com.github.libretube.ui.preferences.PlayerSettings"
         android:label="@string/player" />
-    <fragment
-        android:id="@+id/sponsorBlockSettings"
-        android:name="com.github.libretube.ui.preferences.SponsorBlockSettings"
-        android:label="@string/sponsorblock" />
+
 
     <action
         android:id="@+id/action_global_generalSettings"
@@ -63,13 +57,7 @@
 
 
 
-    <action
-        android:id="@+id/action_global_audioVideoSettings"
-        app:destination="@id/audioVideoSettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
+
 
     <action
         android:id="@+id/action_global_backupRestoreSettings"
@@ -103,13 +91,7 @@
         app:popEnterAnim="@animator/nav_default_pop_enter_anim"
         app:popExitAnim="@animator/nav_default_pop_exit_anim" />
 
-    <action
-        android:id="@+id/action_global_sponsorBlockSettings"
-        app:destination="@id/sponsorBlockSettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
+
 
 
 </navigation>
