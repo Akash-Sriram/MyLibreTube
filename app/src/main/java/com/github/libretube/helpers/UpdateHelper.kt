@@ -42,8 +42,6 @@ object UpdateHelper {
                 }
 
                 val jsonStr = response.body?.string() ?: ""
-                if (jsonStr.isEmpty()) return@launch
-
                 val json = JSONObject(jsonStr)
                 val tagName = json.getString("tag_name")
                 val assets = json.getJSONArray("assets")
@@ -51,6 +49,16 @@ object UpdateHelper {
                 if (assets.length() == 0) return@launch
                 
                 val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
+
+                val cleanTagName = tagName.removePrefix("v").trim()
+                val currentVersion = BuildConfig.VERSION_NAME.removePrefix("v").trim()
+
+                if (cleanTagName == currentVersion) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(appContext, "App is up to date ($currentVersion)", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(appContext, "Downloading update...", Toast.LENGTH_SHORT).show()

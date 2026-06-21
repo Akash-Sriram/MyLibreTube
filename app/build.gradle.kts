@@ -27,6 +27,15 @@ if (keystoreFileExists) {
     keystoreProperties.load(rootProject.file("keystore.properties").inputStream())
 }
 
+fun getVersionName(): String {
+    return try {
+        val process = Runtime.getRuntime().exec("git describe --tags --always")
+        process.inputStream.bufferedReader().readText().trim().removePrefix("v")
+    } catch (e: Exception) {
+        "31.4"
+    }
+}
+
 android {
     compileSdk = 36
 
@@ -35,7 +44,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 70
-        versionName = "31.4"
+        versionName = getVersionName()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "LibreTube")
         resourceConfigurations.add("en")
