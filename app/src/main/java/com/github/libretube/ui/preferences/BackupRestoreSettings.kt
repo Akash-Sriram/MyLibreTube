@@ -1,6 +1,8 @@
 package com.github.libretube.ui.preferences
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,13 +15,12 @@ import com.github.libretube.constants.IntentData
 import com.github.libretube.constants.PreferenceKeys
 import com.github.libretube.databinding.DialogImportExportFormatChooserBinding
 import com.github.libretube.enums.ImportFormat
+import com.github.libretube.extensions.toastFromMainDispatcher
 import com.github.libretube.helpers.BackupHelper
 import com.github.libretube.helpers.ImportHelper
 import com.github.libretube.helpers.PreferenceHelper
 import com.github.libretube.obj.BackupFile
 import com.github.libretube.ui.base.BasePreferenceFragment
-import com.github.libretube.ui.dialogs.BackupDialog
-import com.github.libretube.ui.dialogs.BackupDialog.Companion.BACKUP_DIALOG_REQUEST_KEY
 import com.github.libretube.ui.dialogs.RequireRestartDialog
 import com.github.libretube.util.TextUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -28,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 
 class BackupRestoreSettings : BasePreferenceFragment() {
     private var backupFile = BackupFile()
@@ -47,14 +49,17 @@ class BackupRestoreSettings : BasePreferenceFragment() {
                 }
             }
         }
-    private val createBackupFile = registerForActivityResult(CreateDocument(FILETYPE_ANY)) { uri ->
+
+    private val selectBackupFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri == null) return@registerForActivityResult
-        lifecycleScope.launch(Dispatchers.IO) {
-            BackupHelper.createAdvancedBackup(requireContext().applicationContext, uri, backupFile)
-        }
+        requireContext().contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        )
+        PreferenceHelper.putString(PreferenceKeys.BACKUP_FOLDER_URI, uri.toString())
+        updateBackupFolderSummary()
     }
 
-    // result listeners for importing and exporting playlists
     private val getPlaylistsFile =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { files ->
             for (file in files) {
@@ -113,18 +118,33 @@ class BackupRestoreSettings : BasePreferenceFragment() {
             true
         }
 
-        childFragmentManager.setFragmentResultListener(
-            BACKUP_DIALOG_REQUEST_KEY,
-            this
-        ) { _, resultBundle ->
-            val encodedBackupFile = resultBundle.getString(IntentData.backupFile)!!
-            backupFile = Json.decodeFromString(encodedBackupFile)
-            val timestamp = TextUtils.getFileSafeTimeStampNow()
-            createBackupFile.launch("libretube-backup-${timestamp}.json")
+        val backupFolderPreference = findPreference<Preference>("backup_folder")
+        backupFolderPreference?.setOnPreferenceClickListener {
+            selectBackupFolder.launch(null)
+            true
         }
+
         val advancedBackup = findPreference<Preference>("backup")
         advancedBackup?.setOnPreferenceClickListener {
-            BackupDialog().show(childFragmentManager, null)
+            val folder = BackupHelper.getBackupFolder(requireContext())
+            if (folder != null && folder.exists() && folder.canWrite()) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val file = BackupHelper.getCompleteBackupFile()
+                    val timestamp = TextUtils.getFileSafeTimeStampNow()
+                    val backupFileName = "libretube-backup-${timestamp}.json"
+                    val documentFile = folder.createFile("application/json", backupFileName)
+                    if (documentFile != null) {
+                        requireContext().contentResolver.openOutputStream(documentFile.uri)?.use { outputStream ->
+                            com.github.libretube.api.JsonHelper.json.encodeToStream(file, outputStream)
+                        }
+                        requireContext().toastFromMainDispatcher(R.string.backup_created_success_folder)
+                    } else {
+                        requireContext().toastFromMainDispatcher(R.string.backup_creation_failed)
+                    }
+                }
+            } else {
+                selectBackupFolder.launch(null)
+            }
             true
         }
 
@@ -132,6 +152,60 @@ class BackupRestoreSettings : BasePreferenceFragment() {
         restoreAdvancedBackup?.setOnPreferenceClickListener {
             getBackupFile.launch("*/*")
             true
+        }
+
+        val restoreAutoBackup = findPreference<Preference>("restore_auto")
+        restoreAutoBackup?.setOnPreferenceClickListener {
+            val autoBackups = BackupHelper.getAutoBackups(requireContext())
+            if (autoBackups.isEmpty()) {
+                lifecycleScope.launch {
+                    requireContext().toastFromMainDispatcher(R.string.no_auto_backups_found)
+                }
+            } else {
+                val fileNames = autoBackups.map { item ->
+                    val timestampPart = item.name
+                        .removePrefix("libretube-auto-backup-")
+                        .removeSuffix(".json")
+                    timestampPart
+                }.toTypedArray()
+
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.choose_auto_backup)
+                    .setItems(fileNames) { _, which ->
+                        val selectedItem = autoBackups[which]
+                        CoroutineScope(Dispatchers.IO).launch {
+                            BackupHelper.restoreFromAutoBackupItem(requireContext().applicationContext, selectedItem)
+                            withContext(Dispatchers.Main) {
+                                runCatching {
+                                    RequireRestartDialog().show(childFragmentManager, this::class.java.name)
+                                }
+                            }
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+            true
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateBackupFolderSummary()
+    }
+
+    private fun updateBackupFolderSummary() {
+        val backupFolderPreference = findPreference<Preference>("backup_folder") ?: return
+        val uriString = PreferenceHelper.getString(PreferenceKeys.BACKUP_FOLDER_URI, "")
+        if (uriString.isNotEmpty()) {
+            val folderName = try {
+                androidx.documentfile.provider.DocumentFile.fromTreeUri(requireContext(), Uri.parse(uriString))?.name
+            } catch (e: Exception) {
+                null
+            } ?: uriString
+            backupFolderPreference.summary = getString(R.string.backup_folder_summary_set, folderName)
+        } else {
+            backupFolderPreference.summary = getString(R.string.backup_folder_summary_not_set)
         }
     }
 
@@ -152,7 +226,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
             ImportFormat.PIPED,
             ImportFormat.URLSORIDS
         )
-
 
         fun createImportFormatDialog(
             context: Context,

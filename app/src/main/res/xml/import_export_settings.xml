@@ -23,6 +23,11 @@
     <PreferenceCategory app:title="@string/app_backup">
 
         <Preference
+            android:icon="@drawable/ic_download_folder"
+            app:key="backup_folder"
+            app:title="@string/backup_folder" />
+
+        <Preference
             android:icon="@drawable/ic_backup"
             app:key="backup"
             app:title="@string/backup" />
@@ -31,6 +36,11 @@
             android:icon="@drawable/ic_restore"
             app:key="restore"
             app:title="@string/restore" />
+
+        <Preference
+            android:icon="@drawable/ic_restore"
+            app:key="restore_auto"
+            app:title="@string/restore_auto_backup" />
 
     </PreferenceCategory>
 

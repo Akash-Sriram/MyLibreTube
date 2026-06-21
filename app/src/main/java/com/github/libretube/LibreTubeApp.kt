@@ -42,6 +42,11 @@ class LibreTubeApp : Application() {
         )
 
         /**
+         * Initialize the auto backup worker in the background
+         */
+        com.github.libretube.helpers.BackupHelper.enqueueAutoBackupWork(applicationContext)
+
+        /**
          * Fetch the image proxy URL for local playlists and the watch history
          */
         ProxyHelper.fetchProxyUrl()

@@ -4,8 +4,12 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
+import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.github.libretube.R
 import com.github.libretube.api.JsonHelper
 import com.github.libretube.constants.PreferenceKeys
@@ -13,10 +17,18 @@ import com.github.libretube.db.DatabaseHolder.Database
 import com.github.libretube.extensions.TAG
 import com.github.libretube.extensions.toastFromMainDispatcher
 import com.github.libretube.obj.BackupFile
+import com.github.libretube.obj.PipedImportPlaylist
 import com.github.libretube.obj.PreferenceItem
+import com.github.libretube.ui.dialogs.ShareDialog
+import com.github.libretube.util.TextUtils
+import com.github.libretube.workers.AutoBackupWorker
+import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
@@ -28,6 +40,184 @@ import kotlinx.serialization.json.longOrNull
  * Backup and restore the preferences
  */
 object BackupHelper {
+    private const val AUTO_BACKUP_WORK_NAME = "AutoBackupService"
+
+    data class AutoBackupItem(
+        val name: String,
+        val localFile: File?,
+        val documentFile: DocumentFile?
+    )
+
+    /**
+     * Enqueue the daily auto-backup background work
+     */
+    fun enqueueAutoBackupWork(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiresStorageNotLow(true)
+            .build()
+
+        val autoBackupWorker = PeriodicWorkRequestBuilder<AutoBackupWorker>(
+            24,
+            TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                AUTO_BACKUP_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                autoBackupWorker
+            )
+    }
+
+    /**
+     * Get user-configured backup folder
+     */
+    fun getBackupFolder(context: Context): DocumentFile? {
+        val uriString = PreferenceHelper.getString(PreferenceKeys.BACKUP_FOLDER_URI, "")
+        if (uriString.isNullOrEmpty()) return null
+        return try {
+            DocumentFile.fromTreeUri(context, Uri.parse(uriString))
+        } catch (e: Exception) {
+            Log.e(TAG(), "Error getting backup folder: $e")
+            null
+        }
+    }
+
+    /**
+     * Retrieve all available auto backups from local storage and chosen SAF folder
+     */
+    fun getAutoBackups(context: Context): List<AutoBackupItem> {
+        val list = mutableListOf<AutoBackupItem>()
+
+        // 1. Check internal fallback
+        val autoBackupDir = context.filesDir.resolve("auto_backups")
+        if (autoBackupDir.exists()) {
+            val internalFiles = autoBackupDir.listFiles { _, name ->
+                name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
+            }
+            internalFiles?.forEach { file ->
+                list.add(AutoBackupItem(file.name, file, null))
+            }
+        }
+
+        // 2. Check user chosen folder
+        val folder = getBackupFolder(context)
+        if (folder != null && folder.exists() && folder.canRead()) {
+            val files = folder.listFiles()
+            files.forEach { file ->
+                val name = file.name.orEmpty()
+                if (name.startsWith("libretube-auto-backup-") && name.endsWith(".json")) {
+                    list.add(AutoBackupItem(name, null, file))
+                }
+            }
+        }
+
+        // Sort descending by name (timestamp) to show newest first
+        list.sortByDescending { it.name }
+        return list
+    }
+
+    /**
+     * Build a complete backup file of all active categories
+     */
+    suspend fun getCompleteBackupFile(): BackupFile = withContext(Dispatchers.IO) {
+        val backupFile = BackupFile()
+        backupFile.watchHistory = Database.watchHistoryDao().getAll()
+        backupFile.searchHistory = Database.searchHistoryDao().getAll()
+        backupFile.playlistBookmarks = Database.playlistBookmarkDao().getAll()
+
+        val localPlaylists = Database.localPlaylistsDao().getAll()
+        backupFile.localPlaylists = localPlaylists
+        backupFile.playlists = localPlaylists.map { (playlist, playlistVideos) ->
+            val videos = playlistVideos.map { item ->
+                val isJioSaavn = JioSaavnHelper.isJioSaavn(item.videoId, false)
+                if (isJioSaavn) {
+                    val cleanId = item.videoId.removePrefix("jsa_song_")
+                    val parts = cleanId.split("_")
+                    val token = parts.getOrNull(1) ?: parts[0]
+                    "https://www.jiosaavn.com/song/track/$token"
+                } else {
+                    "${ShareDialog.YOUTUBE_FRONTEND_URL}/watch?v=${item.videoId}"
+                }
+            }
+            PipedImportPlaylist(playlist.name, "playlist", "private", videos)
+        }
+
+        backupFile.preferences = PreferenceHelper.settings.all.map { (key, value) ->
+            val jsonValue = when (value) {
+                is Number -> JsonPrimitive(value)
+                is Boolean -> JsonPrimitive(value)
+                is String -> JsonPrimitive(value)
+                is Set<*> -> JsonPrimitive(value.joinToString(","))
+                else -> JsonNull
+            }
+            PreferenceItem(key, jsonValue)
+        }
+        backupFile
+    }
+
+    /**
+     * Run daily automatic backup, maintaining only the last 5 backups
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun runAutoBackup(context: Context) = withContext(Dispatchers.IO) {
+        try {
+            val backupFile = getCompleteBackupFile()
+            val timestamp = TextUtils.getFileSafeTimeStampNow()
+            val backupFileName = "libretube-auto-backup-${timestamp}.json"
+
+            val folder = getBackupFolder(context)
+            if (folder != null && folder.exists() && folder.canWrite()) {
+                // Save to user chosen SAF folder
+                val documentFile = folder.createFile("application/json", backupFileName)
+                if (documentFile != null) {
+                    context.contentResolver.openOutputStream(documentFile.uri)?.use { outputStream ->
+                        JsonHelper.json.encodeToStream(backupFile, outputStream)
+                    }
+                }
+
+                // Prune to keep last 5 in this folder
+                val files = folder.listFiles()
+                val backupFiles = files.filter { file ->
+                    val name = file.name.orEmpty()
+                    name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
+                }
+                if (backupFiles.size > 5) {
+                    val sorted = backupFiles.sortedBy { it.name.orEmpty() }
+                    val toDeleteCount = sorted.size - 5
+                    for (i in 0 until toDeleteCount) {
+                        sorted[i].delete()
+                    }
+                }
+            } else {
+                // Fallback to internal storage
+                val autoBackupDir = context.filesDir.resolve("auto_backups")
+                if (!autoBackupDir.exists()) {
+                    autoBackupDir.mkdirs()
+                }
+                val file = autoBackupDir.resolve(backupFileName)
+                file.outputStream().use { outputStream ->
+                    JsonHelper.json.encodeToStream(backupFile, outputStream)
+                }
+
+                val backupFiles = autoBackupDir.listFiles { _, name ->
+                    name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
+                }
+                if (backupFiles != null && backupFiles.size > 5) {
+                    backupFiles.sortBy { it.name }
+                    val toDeleteCount = backupFiles.size - 5
+                    for (i in 0 until toDeleteCount) {
+                        backupFiles[i].delete()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG(), "Auto backup failed: $e")
+        }
+    }
+
     /**
      * Write a [BackupFile] containing the database content as well as the preferences
      */
@@ -53,6 +243,35 @@ object BackupHelper {
             JsonHelper.json.decodeFromStream<BackupFile>(it)
         } ?: return@withContext
 
+        restoreBackupFile(context, backupFile)
+    }
+
+    /**
+     * Restore database and preferences from a local AutoBackupItem
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun restoreFromAutoBackupItem(context: Context, item: AutoBackupItem) = withContext(Dispatchers.IO) {
+        val backupFile = if (item.localFile != null) {
+            item.localFile.inputStream().use {
+                JsonHelper.json.decodeFromStream<BackupFile>(it)
+            }
+        } else if (item.documentFile != null) {
+            context.contentResolver.openInputStream(item.documentFile.uri)?.use {
+                JsonHelper.json.decodeFromStream<BackupFile>(it)
+            }
+        } else {
+            null
+        }
+
+        if (backupFile != null) {
+            restoreBackupFile(context, backupFile)
+        }
+    }
+
+    /**
+     * Internal implementation of restore
+     */
+    private suspend fun restoreBackupFile(context: Context, backupFile: BackupFile) {
         Database.watchHistoryDao().insertAll(backupFile.watchHistory.orEmpty())
         Database.searchHistoryDao().insertAll(backupFile.searchHistory.orEmpty())
         Database.playlistBookmarkDao().insertAll(backupFile.playlistBookmarks.orEmpty())
