@@ -137,4 +137,23 @@ object UpdateHelper {
             e.printStackTrace()
         }
     }
+
+    /**
+     * Cleans up any leftover update APKs in the public Downloads directory.
+     */
+    fun cleanUpOldApks(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val files = downloadsDir.listFiles()
+                files?.forEach { file ->
+                    if (file.name.startsWith("MyLibreTube-") && file.name.endsWith(".apk")) {
+                        file.delete()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
