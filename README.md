@@ -55,14 +55,11 @@ Unlike the original upstream client, MyLibreTube is designed to be fully indepen
 ## ✨ Features
 
 * **Dual-Platform Streaming:** Stream content natively from both **YouTube** (via NewPipeExtractor) and **JioSaavn** (for music).
-* **No Ads or Tracking:** Absolute privacy, zero trackers or Google Play Services required.
-* **Background & Lock-Screen Playback:** Listen to videos or music tracks in the background, including a dedicated audio-only mode.
-* **Ergonomic Tactile Mini-Player:** A floating picture-in-picture style player for both video and audio.
-* **Offline Downloads:** Download video and audio files directly to your device storage for offline playback.
-* **Local Subscription Management:** Subscribe to channels locally with custom **Subscription Groups** to organize your feed.
-* **Local Playlists & Bookmarks:** Create custom playlists or bookmark online playlists, with options to export as JSON or URL lists.
+* **Background & Lock-Screen Playback:** Listen to videos or music tracks in the background, including a dedicated audio-only mode and lock-screen controls.
+* **Ergonomic Tactile Mini-Player:** A floating mini-player for both video and audio.
+* **Local Playlists & Bookmarks:** Create custom playlists or bookmark public playlists, with options to export as JSON or URL lists.
 * **Watch & Search History:** Local-only history tracking with pause and clear controls.
-* **YouTube Enhancements:** Full integration with **SponsorBlock** (skip segments), **ReturnYouTubeDislike** (dislike stats), and **DeArrow** (crowdsourced titles & thumbnails).
+* **Nightly In-App Updates:** Dynamic update checks and downloads utilizing Android's `DownloadManager`.
 
 ---
 
