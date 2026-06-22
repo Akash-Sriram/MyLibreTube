@@ -20,6 +20,11 @@
 
         <Preference
             android:icon="@drawable/ic_backup"
+            app:key="backup"
+            app:title="@string/backup" />
+
+        <Preference
+            android:icon="@drawable/ic_restore"
             app:key="backup_restore"
             app:title="@string/backup_restore" />
     </PreferenceCategory>

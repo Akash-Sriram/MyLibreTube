@@ -182,7 +182,12 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
                     }
                     startActivity(settingsIntent)
                     isEnabled = false
-                    findNavController().popBackStack()
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        kotlinx.coroutines.delay(350)
+                        if (isAdded) {
+                            findNavController().popBackStack()
+                        }
+                    }
                 }
             }
             requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)

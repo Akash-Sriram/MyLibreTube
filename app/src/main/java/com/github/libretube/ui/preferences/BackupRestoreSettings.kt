@@ -124,31 +124,6 @@ class BackupRestoreSettings : BasePreferenceFragment() {
             true
         }
 
-        val advancedBackup = findPreference<Preference>("backup")
-        @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
-        advancedBackup?.setOnPreferenceClickListener {
-            val folder = BackupHelper.getBackupFolder(requireContext())
-            if (folder != null && folder.exists() && folder.canWrite()) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val file = BackupHelper.getCompleteBackupFile()
-                    val timestamp = TextUtils.getFileSafeTimeStampNow()
-                    val backupFileName = "libretube-backup-${timestamp}.json"
-                    val documentFile = folder.createFile("application/json", backupFileName)
-                    if (documentFile != null) {
-                        requireContext().contentResolver.openOutputStream(documentFile.uri)?.use { outputStream ->
-                            com.github.libretube.api.JsonHelper.json.encodeToStream(file, outputStream)
-                        }
-                        requireContext().toastFromMainDispatcher(R.string.backup_created_success_folder)
-                    } else {
-                        requireContext().toastFromMainDispatcher(R.string.backup_creation_failed)
-                    }
-                }
-            } else {
-                selectBackupFolder.launch(null)
-            }
-            true
-        }
-
         val restoreAdvancedBackup = findPreference<Preference>("restore")
         restoreAdvancedBackup?.setOnPreferenceClickListener {
             getBackupFile.launch("*/*")
