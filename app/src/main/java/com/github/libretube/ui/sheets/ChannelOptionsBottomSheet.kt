@@ -42,7 +42,6 @@ class ChannelOptionsBottomSheet : BaseBottomSheet() {
             R.string.play_latest_videos,
             R.string.playOnBackground
         )
-        if (subscribed) optionsList.add(R.string.add_to_group)
 
         setSimpleItems(optionsList.map { getString(it) }) { which ->
             when (optionsList[which]) {
@@ -55,13 +54,6 @@ class ChannelOptionsBottomSheet : BaseBottomSheet() {
                     val newShareDialog = ShareDialog()
                     newShareDialog.arguments = bundle
                     newShareDialog.show(parentFragmentManager, null)
-                }
-
-                R.string.add_to_group -> {
-                    val sheet = AddChannelToGroupSheet().apply {
-                        arguments = bundleOf(IntentData.channelId to channelId)
-                    }
-                    sheet.show(parentFragmentManager, null)
                 }
 
                 R.string.play_latest_videos -> {

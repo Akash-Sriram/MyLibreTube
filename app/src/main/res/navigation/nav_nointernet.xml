@@ -10,9 +10,5 @@
         android:label="fragment_nointernet"
         tools:layout="@layout/fragment_nointernet" />
 
-    <fragment
-        android:id="@+id/downloadsFragment"
-        android:name="com.github.libretube.ui.fragments.DownloadsFragment"
-        android:label="@string/downloads"
-        tools:layout="@layout/fragment_downloads" />
+
 </navigation>

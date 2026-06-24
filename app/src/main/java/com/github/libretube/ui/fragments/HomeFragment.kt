@@ -24,7 +24,6 @@ import com.github.libretube.ui.adapters.CarouselPlaylist
 import com.github.libretube.ui.adapters.CarouselPlaylistAdapter
 import com.github.libretube.ui.adapters.VideoCardsAdapter
 import com.github.libretube.ui.models.HomeViewModel
-import com.github.libretube.ui.models.SubscriptionsViewModel
 import com.github.libretube.ui.models.TrendsViewModel
 import com.google.android.material.carousel.CarouselLayoutManager
 import com.google.android.material.carousel.CarouselSnapHelper
@@ -38,11 +37,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
 
     private val homeViewModel: HomeViewModel by activityViewModels()
-    private val subscriptionsViewModel: SubscriptionsViewModel by activityViewModels()
     private val trendsViewModel: TrendsViewModel by activityViewModels()
 
     private val trendingAdapter = VideoCardsAdapter()
-    private val feedAdapter = VideoCardsAdapter(columnWidthDp = 250f)
     private val watchingAdapter = VideoCardsAdapter(columnWidthDp = 250f)
     private val bookmarkAdapter = CarouselPlaylistAdapter()
     private val playlistAdapter = CarouselPlaylistAdapter()
@@ -61,7 +58,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         playlistsSnapHelper.attachToRecyclerView(binding.playlistsRV)
 
         binding.trendingRV.adapter = trendingAdapter
-        binding.featuredRV.adapter = feedAdapter
         binding.bookmarksRV.adapter = bookmarkAdapter
         binding.playlistsRV.adapter = playlistAdapter
         binding.playlistsRV.adapter?.registerAdapterDataObserver(object :
@@ -78,16 +74,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         with(homeViewModel) {
             trending.observe(viewLifecycleOwner, ::showTrending)
-            feed.observe(viewLifecycleOwner, ::showFeed)
             bookmarks.observe(viewLifecycleOwner, ::showBookmarks)
             playlists.observe(viewLifecycleOwner, ::showPlaylists)
             continueWatching.observe(viewLifecycleOwner, ::showContinueWatching)
             isLoading.observe(viewLifecycleOwner, ::updateLoading)
         }
 
-        binding.featuredTV.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_subscriptionsFragment)
-        }
+
 
         binding.watchingTV.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_watchHistoryFragment)
@@ -180,7 +173,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         homeViewModel.loadHomeFeed(
             context = requireContext(),
-            subscriptionsViewModel = subscriptionsViewModel,
             visibleItems = visibleItems,
             onUnusualLoadTime = {}
         )
@@ -202,14 +194,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         trendingAdapter.submitList(trendingStreams.streams.take(10))
     }
 
-    private fun showFeed(streamItems: List<StreamItem>?) {
-        if (streamItems == null) return
 
-        makeVisible(binding.featuredRV, binding.featuredTV)
-        val feedVideos = streamItems.take(20)
-
-        feedAdapter.submitList(feedVideos)
-    }
 
     private fun showBookmarks(bookmarks: List<PlaylistBookmark>?) {
         if (bookmarks == null) return

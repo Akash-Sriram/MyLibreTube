@@ -20,8 +20,6 @@ import androidx.media3.extractor.text.DefaultSubtitleParserFactory
 import androidx.media3.extractor.text.SubtitleExtractor
 import com.github.libretube.R
 import com.github.libretube.api.MediaServiceRepository
-import com.github.libretube.api.SubscriptionHelper
-import com.github.libretube.api.obj.Segment
 import com.github.libretube.api.obj.Streams
 import com.github.libretube.constants.IntentData
 import com.github.libretube.constants.PreferenceKeys
@@ -40,7 +38,6 @@ import com.github.libretube.helpers.ProxyHelper
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.player.SabrMediaSource
 import com.github.libretube.player.manifest.SabrManifest
-import com.github.libretube.util.DeArrowUtil
 import com.github.libretube.util.PlayingQueue
 import com.github.libretube.util.YoutubeHlsPlaylistParser
 import kotlinx.coroutines.CoroutineScope
@@ -142,9 +139,7 @@ open class OnlinePlayerService : AbstractPlayerService() {
         fetchVideoInfoJob = scope.launch {
             streams = withContext(Dispatchers.IO) {
                 try {
-                    MediaServiceRepository.instance.getStreams(videoId).let {
-                        DeArrowUtil.deArrowStreams(it, videoId)
-                    }
+                    MediaServiceRepository.instance.getStreams(videoId)
                 }  catch (e: Exception) {
                     Log.e(TAG(), e.stackTraceToString())
                     toastFromMainDispatcher(e.localizedMessage.orEmpty())
@@ -159,14 +154,6 @@ open class OnlinePlayerService : AbstractPlayerService() {
                 if (!PlayingQueue.hasNext()) {
                     PlayingQueue.updateQueue(it, playlistId, channelId, streams!!.relatedStreams)
                 }
-
-                // update feed item with newer information, e.g. more up-to-date views
-                SubscriptionHelper.submitFeedItemChange(it.toFeedItem())
-            }
-
-            launch {
-                val segments = getSponsorBlockSegments()
-                withContext(Dispatchers.Main) { setSponsorBlockSegments(segments) }
             }
 
             withContext(Dispatchers.Main) {
@@ -219,15 +206,7 @@ open class OnlinePlayerService : AbstractPlayerService() {
         navigateVideo(nextVideo)
     }
 
-    private suspend fun getSponsorBlockSegments(): List<Segment> {
-        return runCatching {
-            MediaServiceRepository.instance.getSegments(
-                videoId,
-                sponsorBlockConfig.keys.toList(),
-                listOf("skip", "mute", "full", "poi", "chapter")
-            ).segments
-        }.getOrElse { emptyList() }
-    }
+
 
     override fun navigateVideo(videoId: String) {
         this.streams = null

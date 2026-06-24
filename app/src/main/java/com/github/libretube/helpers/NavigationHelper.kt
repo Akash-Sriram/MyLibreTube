@@ -56,12 +56,10 @@ object NavigationHelper {
         audioOnlyPlayerRequested: Boolean = false,
     ) {
         val isJioSaavn = JioSaavnHelper.isJioSaavn(playerData.videoId, playerData.isOffline)
-        // Check cache: if we already know this is a music video, route directly to audio player
-        val isCachedMusic = !playerData.isOffline
-            && playerData.videoId != null
-            && PlayerHelper.autoMusicAudioMode
-            && MusicCategoryCache.get(context, playerData.videoId.toID()) == true
-        val finalAudioOnlyPlayerRequested = audioOnlyPlayerRequested || isJioSaavn || isCachedMusic
+        // Only JioSaavn or explicit audio-only requests route to the audio player.
+        // Music category videos always load in the video player first;
+        // the player itself will activate the audio-only thumbnail layout if needed.
+        val finalAudioOnlyPlayerRequested = audioOnlyPlayerRequested || isJioSaavn
 
 
         // attempt to attach to the current media session first by using the corresponding
@@ -116,18 +114,21 @@ object NavigationHelper {
         }
         if (attachedToRunningAudioPlayer) return
 
-        if (finalAudioOnlyPlayerRequested || (audioOnlyMode && !forceVideo)) {
-            // in contrast to the video player, the audio player doesn't start a media service on
-            // its own!
+        // Audio player is the default for all YouTube content.
+        // Only open the video player when explicitly forced (e.g. user tapped the video button
+        // in the audio player, or forceVideo was set on the method call).
+        val goToVideoPlayer = playerData.forceVideo || forceVideo
+        if (!goToVideoPlayer) {
             BackgroundHelper.playOnBackground(context, playerData)
-
-            openAudioPlayerFragment(context, offlinePlayer = playerData.isOffline, minimizeByDefault = !isJioSaavn)
-        } else {
-            openVideoPlayerFragment(
+            // Always expand the audio player by default (never minimize on open)
+            openAudioPlayerFragment(
                 context,
-                playerData,
-                alreadyStarted
+                offlinePlayer = playerData.isOffline,
+                minimizeByDefault = false,
+                noAutoVideoSwitch = isJioSaavn  // JioSaavn must never auto-switch to video
             )
+        } else {
+            openVideoPlayerFragment(context, playerData, alreadyStarted)
         }
     }
 
@@ -146,13 +147,15 @@ object NavigationHelper {
     fun openAudioPlayerFragment(
         context: Context,
         offlinePlayer: Boolean = false,
-        minimizeByDefault: Boolean = false
+        minimizeByDefault: Boolean = false,
+        noAutoVideoSwitch: Boolean = false
     ) {
         val activity = ContextHelper.unwrapActivity<BaseActivity>(context)
         activity.supportFragmentManager.commitNow {
             val args = bundleOf(
                 IntentData.minimizeByDefault to minimizeByDefault,
-                IntentData.offlinePlayer to offlinePlayer
+                IntentData.offlinePlayer to offlinePlayer,
+                IntentData.noAutoVideoSwitch to noAutoVideoSwitch
             )
             replace<AudioPlayerFragment>(R.id.container, args = args)
         }

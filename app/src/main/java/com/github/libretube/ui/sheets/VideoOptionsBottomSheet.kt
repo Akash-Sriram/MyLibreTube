@@ -14,7 +14,6 @@ import com.github.libretube.db.obj.WatchPosition
 import com.github.libretube.enums.ShareObjectType
 import com.github.libretube.extensions.parcelable
 import com.github.libretube.extensions.toID
-import com.github.libretube.helpers.DownloadHelper
 import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.PlayerHelper
 import com.github.libretube.helpers.PreferenceHelper
@@ -23,7 +22,6 @@ import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.ui.activities.MainActivity
 import com.github.libretube.ui.dialogs.AddToPlaylistDialog
 import com.github.libretube.ui.dialogs.ShareDialog
-import com.github.libretube.ui.fragments.SubscriptionsFragment
 import com.github.libretube.util.PlayingQueue
 import com.github.libretube.util.PlayingQueueMode
 import kotlinx.coroutines.Dispatchers
@@ -106,15 +104,7 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
                             DatabaseHelper.addToWatchHistory(streamItem.toWatchHistoryItem(videoId))
                         }
                     }
-                    if (PreferenceHelper.getBoolean(PreferenceKeys.HIDE_WATCHED_FROM_FEED, false)) {
-                        // get the host fragment containing the current fragment
-                        val navHostFragment = (context as MainActivity).supportFragmentManager
-                            .findFragmentById(R.id.fragment) as NavHostFragment?
-                        // get the current fragment
-                        val fragment = navHostFragment?.childFragmentManager?.fragments
-                            ?.firstOrNull() as? SubscriptionsFragment
-                        fragment?.removeItem(videoId)
-                    }
+
                     setFragmentResult(VIDEO_OPTIONS_SHEET_REQUEST_KEY, bundleOf())
                 }
 

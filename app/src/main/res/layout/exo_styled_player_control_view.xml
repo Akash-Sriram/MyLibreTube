@@ -74,32 +74,7 @@
                     app:track="@drawable/player_switch_track"
                     app:trackTint="#88ffffff" />
 
-                <ImageButton
-                    android:id="@+id/dearrow_submit"
-                    style="@style/PlayerControlTop"
-                    android:layout_marginEnd="2dp"
-                    android:src="@drawable/ic_dearrow"
-                    android:tooltipText="@string/contribute_to_dearrow"
-                    android:visibility="gone"
-                    app:tint="@android:color/white" />
 
-                <ImageButton
-                    android:id="@+id/sb_submit"
-                    style="@style/PlayerControlTop"
-                    android:layout_marginEnd="2dp"
-                    android:src="@drawable/ic_upload_segment"
-                    android:tooltipText="@string/sb_create_segment"
-                    android:visibility="gone"
-                    app:tint="@android:color/white" />
-
-                <ImageButton
-                    android:id="@+id/sb_toggle"
-                    style="@style/PlayerControlTop"
-                    android:layout_marginEnd="2dp"
-                    android:src="@drawable/ic_sb_enabled"
-                    android:tooltipText="@string/tooltip_sponsorblock"
-                    android:visibility="gone"
-                    app:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/queue_toggle"

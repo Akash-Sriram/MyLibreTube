@@ -30,10 +30,6 @@
         android:name="com.github.libretube.ui.preferences.HistorySettings"
         android:label="@string/history" />
     <fragment
-        android:id="@+id/notificationSettings"
-        android:name="com.github.libretube.ui.preferences.NotificationSettings"
-        android:label="@string/notifications" />
-    <fragment
         android:id="@+id/playerSettings"
         android:name="com.github.libretube.ui.preferences.PlayerSettings"
         android:label="@string/player" />
@@ -70,14 +66,6 @@
     <action
         android:id="@+id/action_global_historySettings"
         app:destination="@id/historySettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
-
-    <action
-        android:id="@+id/action_global_notificationSettings"
-        app:destination="@id/notificationSettings"
         app:enterAnim="@animator/nav_default_enter_anim"
         app:exitAnim="@animator/nav_default_exit_anim"
         app:popEnterAnim="@animator/nav_default_pop_enter_anim"

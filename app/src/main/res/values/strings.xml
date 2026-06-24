@@ -382,6 +382,10 @@
     <string name="hide_watched_from_feed">Hide already watched videos</string>
     <string name="playlistUrl">Playlist URL</string>
     <string name="shuffle">Shuffle</string>
+    <string name="scan">Scan</string>
+    <string name="scan_playlist_starting">Scanning playlist videos…</string>
+    <string name="scan_playlist_progress">Scanning %1$d / %2$d videos…</string>
+    <string name="scan_playlist_done">Scan complete! Future plays will route instantly.</string>
     <string name="add_to_bookmarks">Add to bookmarks</string>
     <string name="remove_bookmark">Remove bookmark</string>
     <string name="rewind">Rewind</string>
@@ -568,6 +572,10 @@
     <plurals name="channel_new_streams">
         <item quantity="one">%d new stream</item>
         <item quantity="other">%d new streams</item>
+    </plurals>
+    <plurals name="scan_playlist_prompt">
+        <item quantity="one">%d video not yet scanned — tap Scan for instant routing</item>
+        <item quantity="other">%d videos not yet scanned — tap Scan for instant routing</item>
     </plurals>
     <!--Tooltips -->
     <string name="tooltip_repeat">Repeat</string>

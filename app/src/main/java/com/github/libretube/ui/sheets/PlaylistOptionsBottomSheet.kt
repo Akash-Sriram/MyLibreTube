@@ -15,7 +15,6 @@ import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.toastFromMainDispatcher
 import com.github.libretube.helpers.BackgroundHelper
 import com.github.libretube.helpers.ContextHelper
-import com.github.libretube.helpers.DownloadHelper
 import com.github.libretube.obj.ShareData
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.ui.activities.MainActivity

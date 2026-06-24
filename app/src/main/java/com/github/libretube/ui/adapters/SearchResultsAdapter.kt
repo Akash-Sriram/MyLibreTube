@@ -14,7 +14,6 @@ import com.github.libretube.constants.IntentData
 import com.github.libretube.databinding.ChannelRowBinding
 import com.github.libretube.databinding.PlaylistsRowBinding
 import com.github.libretube.databinding.VideoRowBinding
-import com.github.libretube.db.DatabaseHolder
 import com.github.libretube.enums.PlaylistType
 import com.github.libretube.extensions.formatShort
 import com.github.libretube.extensions.toID
@@ -25,12 +24,10 @@ import com.github.libretube.ui.adapters.callbacks.DiffUtilItemCallback
 import com.github.libretube.ui.base.BaseActivity
 import com.github.libretube.ui.extensions.setFormattedDuration
 import com.github.libretube.ui.extensions.setWatchProgressLength
-import com.github.libretube.ui.extensions.setupSubscriptionButton
+import com.github.libretube.ui.viewholders.SearchViewHolder
 import com.github.libretube.ui.sheets.ChannelOptionsBottomSheet
 import com.github.libretube.ui.sheets.PlaylistOptionsBottomSheet
 import com.github.libretube.ui.sheets.VideoOptionsBottomSheet
-import com.github.libretube.ui.viewholders.SearchViewHolder
-import com.github.libretube.util.DeArrowUtil
 import com.github.libretube.util.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -131,23 +128,7 @@ class SearchResultsAdapter(
             }
             watchProgress.setWatchProgressLength(videoId, item.duration)
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val isDownloaded =
-                    DatabaseHolder.Database.downloadDao().exists(videoId)
-
-                withContext(Dispatchers.Main) {
-                    downloadBadge.isVisible = isDownloaded
-                }
-            }
-
-            CoroutineScope(Dispatchers.IO).launch {
-                DeArrowUtil.deArrowVideoId(videoId)?.let { (title, thumbnail) ->
-                    withContext(Dispatchers.Main) {
-                        if (title != null) binding.videoTitle.text = title
-                        if (thumbnail != null) ImageHelper.loadImage(thumbnail, binding.thumbnail)
-                    }
-                }
-            }
+            downloadBadge.isGone = true
         }
     }
 
@@ -171,22 +152,14 @@ class SearchResultsAdapter(
                 NavigationHelper.navigateChannel(root.context, item.url)
             }
 
-            var subscribed = false
-            binding.searchSubButton.setupSubscriptionButton(
-                item.url.toID(),
-                item.name.orEmpty(),
-                item.thumbnail,
-                item.uploaderVerified ?: false
-            ) {
-                subscribed = it
-            }
+            binding.searchSubButton.isGone = true
 
             root.setOnLongClickListener {
                 val channelOptionsSheet = ChannelOptionsBottomSheet()
                 channelOptionsSheet.arguments = bundleOf(
                     IntentData.channelId to item.url.toID(),
                     IntentData.channelName to item.name,
-                    IntentData.isSubscribed to subscribed
+                    IntentData.isSubscribed to false
                 )
                 channelOptionsSheet.show((root.context as BaseActivity).supportFragmentManager)
                 true

@@ -3,10 +3,9 @@ package com.github.libretube
 import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.work.ExistingPeriodicWorkPolicy
 import com.github.libretube.helpers.ImageHelper
 import com.github.libretube.helpers.NewPipeExtractorInstance
-import com.github.libretube.helpers.NotificationHelper
+import com.github.libretube.helpers.PlaylistCategoryScanner
 import com.github.libretube.helpers.PreferenceHelper
 import com.github.libretube.helpers.ProxyHelper
 import com.github.libretube.helpers.ShortcutHelper
@@ -33,13 +32,7 @@ class LibreTubeApp : Application() {
          */
         ImageHelper.initializeImageLoader(this)
 
-        /**
-         * Initialize the notification listener in the background
-         */
-        NotificationHelper.enqueueWork(
-            context = this,
-            existingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP
-        )
+
 
         /**
          * Initialize the auto backup worker in the background
@@ -50,6 +43,12 @@ class LibreTubeApp : Application() {
          * Fetch the image proxy URL for local playlists and the watch history
          */
         ProxyHelper.fetchProxyUrl()
+
+        /**
+         * Silently scan all local playlist items that haven't been categorized yet.
+         * Runs in background for the duration of the app process — no prompts, no UI.
+         */
+        PlaylistCategoryScanner.startAutoScan(applicationContext)
 
         /**
          * Handler for uncaught exceptions

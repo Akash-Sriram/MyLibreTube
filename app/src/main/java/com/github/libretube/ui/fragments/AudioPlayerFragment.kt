@@ -27,6 +27,7 @@ import androidx.media3.session.MediaController
 import com.github.libretube.R
 import com.github.libretube.api.JsonHelper
 import com.github.libretube.api.obj.ChapterSegment
+import com.github.libretube.api.obj.Streams
 import com.github.libretube.constants.IntentData
 import com.github.libretube.databinding.FragmentAudioPlayerBinding
 import com.github.libretube.enums.PlayerCommand
@@ -40,12 +41,13 @@ import com.github.libretube.helpers.AudioHelper
 import com.github.libretube.helpers.BackgroundHelper
 import com.github.libretube.helpers.ClipboardHelper
 import com.github.libretube.helpers.ImageHelper
+import com.github.libretube.helpers.JioSaavnHelper
+import com.github.libretube.helpers.MusicCategoryCache
 import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.PlayerHelper
 import com.github.libretube.helpers.ThemeHelper
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.services.AbstractPlayerService
-import com.github.libretube.services.OfflinePlayerService
 import com.github.libretube.services.OnlinePlayerService
 import com.github.libretube.ui.activities.AbstractPlayerHostActivity
 import com.github.libretube.ui.extensions.getSystemInsets
@@ -83,6 +85,12 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
 
     var isOffline: Boolean = false
         private set
+    // When true, the audio player will NOT auto-promote to the video player for non-music content.
+    // Set when the user manually switches from the video player to the audio player.
+    private var noAutoVideoSwitch: Boolean = false
+    // Tracks whether the auto-switch decision has been made for the current track.
+    // Reset each time metadata changes (new track) so queued videos are re-evaluated.
+    private var autoSwitchChecked: Boolean = false
     private var playerController: MediaController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,10 +99,11 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
         audioHelper = AudioHelper(requireContext())
 
         isOffline = requireArguments().getBoolean(IntentData.offlinePlayer)
+        noAutoVideoSwitch = requireArguments().getBoolean(IntentData.noAutoVideoSwitch, false)
 
         BackgroundHelper.startMediaService(
             requireContext(),
-            if (isOffline) OfflinePlayerService::class.java else OnlinePlayerService::class.java,
+            OnlinePlayerService::class.java,
         ) {
             if (_binding == null) {
                 it.sendCustomCommand(AbstractPlayerService.stopServiceCommand, Bundle.EMPTY)
@@ -280,7 +289,8 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
             context = requireContext(),
             playerData = PlayerData(
                 videoId = videoId,
-                isOffline = isOffline
+                isOffline = isOffline,
+                forceVideo = true
             ),
             alreadyStarted = true
         )
@@ -344,7 +354,10 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
     }
 
     /**
-     * Load the information from a new stream into the UI
+     * Load the information from a new stream into the UI.
+     * Also handles the auto-promote-to-video logic with a two-level cache:
+     *   1. MusicCategoryCache (instant, in-memory) — used on 2nd+ play of any video
+     *   2. Stream metadata extras — used on 1st play (with STATE_READY fallback)
      */
     private fun updateStreamInfo(metadata: MediaMetadata) {
         val binding = _binding ?: return
@@ -359,6 +372,47 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
         }
 
         metadata.artworkUri?.let { updateThumbnailAsync(it) }
+
+        if (noAutoVideoSwitch || isOffline) {
+            autoSwitchChecked = true  // no auto-switching in these modes — suppress STATE_READY retries
+        } else if (!autoSwitchChecked) {
+            val currentId = PlayingQueue.getCurrent()?.url?.toID()
+            val isJioSaavn = JioSaavnHelper.isJioSaavn(currentId, isOffline)
+
+            if (isJioSaavn) {
+                autoSwitchChecked = true  // JioSaavn always stays in audio
+            } else if (currentId != null) {
+                // --- Fast path: check in-memory cache first (populated on previous plays or scan) ---
+                val cached = MusicCategoryCache.get(requireContext(), currentId)
+                if (cached != null) {
+                    autoSwitchChecked = true
+                    if (!cached) {
+                        // Previously identified as video content → switch immediately, no stream wait
+                        switchToVideoMode(currentId)
+                        return
+                    }
+                    // else cached as "stay in audio" — fall through to render audio UI
+                } else {
+                    // --- Slow path: decode from stream metadata (1st play of this video) ---
+                    val streams: Streams? = metadata.extras?.getString(IntentData.streams)?.let {
+                        JsonHelper.json.decodeFromString(it)
+                    }
+                    if (streams != null) {
+                        autoSwitchChecked = true
+                        val isMusic = streams.category == Streams.CATEGORY_MUSIC
+                        val hasVideo = streams.videoStreams.isNotEmpty()
+                        // Store for instant routing on all future plays
+                        val stayInAudio = isMusic || !hasVideo
+                        MusicCategoryCache.put(requireContext(), currentId, stayInAudio)
+                        if (!stayInAudio) {
+                            switchToVideoMode(currentId)
+                            return
+                        }
+                    }
+                    // If streams still null here, STATE_READY hook will retry
+                }
+            }
+        }
 
         initializeSeekBar()
     }
@@ -450,7 +504,8 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
 
             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                 super.onMediaMetadataChanged(mediaMetadata)
-
+                // New track → reset the switch decision so we re-evaluate for this video
+                autoSwitchChecked = false
                 updateStreamInfo(mediaMetadata)
                 // JSON-encode as work-around for https://github.com/androidx/media/issues/564
                 val chapters: List<ChapterSegment>? =
@@ -458,6 +513,15 @@ class AudioPlayerFragment : Fragment(R.layout.fragment_audio_player), AudioPlaye
                         JsonHelper.json.decodeFromString(it)
                     }
                 chaptersModel.chaptersLiveData.value = chapters
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                // STATE_READY is a reliable fallback: streams are always loaded by now.
+                // If the first metadata check had null streams, this ensures we retry.
+                if (playbackState == Player.STATE_READY && !autoSwitchChecked) {
+                    playerController?.mediaMetadata?.let { updateStreamInfo(it) }
+                }
             }
         })
         playerController?.mediaMetadata?.let { updateStreamInfo(it) }

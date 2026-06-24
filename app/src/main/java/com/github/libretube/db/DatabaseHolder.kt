@@ -83,6 +83,15 @@ object DatabaseHolder {
         }
     }
 
+    private val MIGRATION_24_25 = object : Migration(24, 25) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add stream category cache columns to local playlist items.
+            // Null = not yet scanned. Populated by the playlist scan feature or on first play.
+            db.execSQL("ALTER TABLE 'localPlaylistItem' ADD COLUMN 'category' TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE 'localPlaylistItem' ADD COLUMN 'hasVideoStreams' INTEGER DEFAULT NULL")
+        }
+    }
+
     val Database by lazy {
         Room.databaseBuilder(LibreTubeApp.instance, AppDatabase::class.java, DATABASE_NAME)
             .addMigrations(
@@ -94,7 +103,9 @@ object DatabaseHolder {
                 MIGRATION_17_18,
                 MIGRATION_21_22,
                 MIGRATION_22_23,
+                MIGRATION_24_25,
             )
+            .fallbackToDestructiveMigration()
             .build()
     }
 }

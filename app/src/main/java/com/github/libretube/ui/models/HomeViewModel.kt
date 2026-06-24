@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.libretube.api.MediaServiceRepository
 import com.github.libretube.api.PlaylistsHelper
-import com.github.libretube.api.SubscriptionHelper
 import com.github.libretube.api.TrendingCategory
 import com.github.libretube.api.obj.Playlists
 import com.github.libretube.api.obj.StreamItem
@@ -40,20 +39,18 @@ class HomeViewModel : ViewModel() {
 
     val trending: MutableLiveData<Pair<TrendingCategory, TrendsViewModel.TrendingStreams>> =
         MutableLiveData(null)
-    val feed: MutableLiveData<List<StreamItem>> = MutableLiveData(null)
     val bookmarks: MutableLiveData<List<PlaylistBookmark>> = MutableLiveData(null)
     val playlists: MutableLiveData<List<Playlists>> = MutableLiveData(null)
     val continueWatching: MutableLiveData<List<StreamItem>> = MutableLiveData(null)
     val isLoading: MutableLiveData<Boolean> = MutableLiveData(true)
     val loadedSuccessfully: MutableLiveData<Boolean> = MutableLiveData(false)
 
-    private val sections get() = listOf(trending, feed, bookmarks, playlists, continueWatching)
+    private val sections get() = listOf(trending, bookmarks, playlists, continueWatching)
 
     private var loadHomeJob: Job? = null
 
     fun loadHomeFeed(
         context: Context,
-        subscriptionsViewModel: SubscriptionsViewModel,
         visibleItems: Set<String>,
         onUnusualLoadTime: () -> Unit
     ) {
@@ -64,7 +61,6 @@ class HomeViewModel : ViewModel() {
             val result = async {
                 awaitAll(
                     async { if (visibleItems.contains(TRENDING)) loadTrending(context) },
-                    async { if (visibleItems.contains(FEATURED)) loadFeed(subscriptionsViewModel) },
                     async { if (visibleItems.contains(BOOKMARKS)) loadBookmarks() },
                     async { if (visibleItems.contains(PLAYLISTS)) loadPlaylists() },
                     async { if (visibleItems.contains(WATCHING)) loadVideosToContinueWatching() }
@@ -104,12 +100,7 @@ class HomeViewModel : ViewModel() {
         )
     }
 
-    private suspend fun loadFeed(subscriptionsViewModel: SubscriptionsViewModel) {
-        runSafely(
-            onSuccess = { videos -> feed.updateIfChanged(videos) },
-            ioBlock = { tryLoadFeed(subscriptionsViewModel) }
-        )
-    }
+
 
     private suspend fun loadBookmarks() {
         runSafely(
@@ -140,20 +131,8 @@ class HomeViewModel : ViewModel() {
             .filterUnwatched(videos.map { it.toStreamItem() })
     }
 
-    private suspend fun tryLoadFeed(subscriptionsViewModel: SubscriptionsViewModel): List<StreamItem> {
-        // use cached feed if available, otherwise load feed from API/database
-        val feed = subscriptionsViewModel.videoFeed.value ?: run {
-            SubscriptionHelper.getFeed(forceRefresh = false).also {
-                subscriptionsViewModel.videoFeed.postValue(it)
-            }
-        }
-
-        return DatabaseHelper.filterByStreamTypeAndWatchPosition(feed, hideWatched, showUpcoming)
-    }
-
     companion object {
         private const val UNUSUAL_LOAD_TIME_MS = 10000L
-        private const val FEATURED = "featured"
         private const val WATCHING = "watching"
         private const val TRENDING = "trending"
         private const val BOOKMARKS = "bookmarks"

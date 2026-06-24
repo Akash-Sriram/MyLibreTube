@@ -8,7 +8,6 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.ListAdapter
-import com.github.libretube.api.SponsorBlockLabelHelper
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.constants.IntentData
 import com.github.libretube.databinding.AllCaughtUpRowBinding
@@ -25,7 +24,6 @@ import com.github.libretube.ui.extensions.setFormattedDuration
 import com.github.libretube.ui.extensions.setWatchProgressLength
 import com.github.libretube.ui.sheets.VideoOptionsBottomSheet
 import com.github.libretube.ui.viewholders.VideoCardsViewHolder
-import com.github.libretube.util.DeArrowUtil
 import com.github.libretube.util.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -127,32 +125,7 @@ class VideoCardsAdapter(private val columnWidthDp: Float? = null) :
                 true
             }
 
-            // always hide the icon, to avoid issues where the icon is recycled and shown until the web requests succeeds
             sponsorBadgeCard.isVisible = false
-            CoroutineScope(Dispatchers.IO).launch {
-                if (PlayerHelper.sponsorBlockEnabled) {
-                    val sponsor = SponsorBlockLabelHelper.getVideoLabels(videoId)
-                    withContext(Dispatchers.Main) {
-                        val category = sponsor?.segments?.firstOrNull()?.category
-                        sponsorBadgeCard.isVisible = category != null
-                        SponsorBlockLabelHelper.categoryIcon(category)?.let {
-                            sponsorBadgeIcon.setImageDrawable(
-                                context.getDrawable(it)
-                            )
-                        }
-                        sponsorBadgeIcon.tooltipText =
-                            SponsorBlockLabelHelper.categoryLabel(category)
-                                ?.let { context.getString(it) }
-                    }
-                }
-
-                DeArrowUtil.deArrowVideoId(videoId)?.let { (title, thumbnail) ->
-                    withContext(Dispatchers.Main) {
-                        if (title != null) this@apply.textViewTitle.text = title
-                        if (thumbnail != null) ImageHelper.loadImage(thumbnail, this@apply.thumbnail)
-                    }
-                }
-            }
         }
     }
 

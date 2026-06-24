@@ -4,11 +4,9 @@ import com.github.libretube.api.obj.Channel
 import com.github.libretube.api.obj.ChannelTabResponse
 import com.github.libretube.api.obj.CommentsPage
 import com.github.libretube.api.obj.ContentItem
-import com.github.libretube.api.obj.DeArrowContent
 import com.github.libretube.api.obj.Playlist
 import com.github.libretube.api.obj.PipedStream
 import com.github.libretube.api.obj.SearchResult
-import com.github.libretube.api.obj.SegmentData
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.api.obj.Streams
 
@@ -204,13 +202,7 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     override suspend fun getComments(videoId: String): CommentsPage =
         CommentsPage(emptyList(), false, null, 0)
 
-    override suspend fun getSegments(
-        videoId: String,
-        category: List<String>,
-        actionType: List<String>?
-    ): SegmentData = SegmentData(null, emptyList(), null)
 
-    override suspend fun getDeArrowContent(videoId: String): DeArrowContent? = null
 
     override suspend fun getCommentsNextPage(videoId: String, nextPage: String): CommentsPage =
         CommentsPage(emptyList(), false, null, 0)

@@ -11,11 +11,8 @@ import androidx.core.text.parseAsHtml
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.github.libretube.R
-import com.github.libretube.api.SponsorBlockLabelHelper
-import com.github.libretube.api.obj.Segment
 import com.github.libretube.api.obj.Streams
 import com.github.libretube.databinding.DescriptionLayoutBinding
-import com.github.libretube.enums.SbSkipOptions
 import com.github.libretube.extensions.formatShort
 import com.github.libretube.helpers.ClipboardHelper
 import com.github.libretube.helpers.PlayerHelper
@@ -47,17 +44,7 @@ class DescriptionLayout(
         binding.tagsRecycler.adapter = videoTagsAdapter
     }
 
-    fun setSegments(segments: List<Segment>) {
-        if (PlayerHelper.getSponsorBlockCategories()[SB_SPONSOR_CATEGORY] == SbSkipOptions.OFF) {
-            // only show the badge if the user requested to show sponsors
-           return
-        }
 
-        val category = segments.filter { it.actionType == Segment.TYPE_FULL }.firstNotNullOfOrNull { it.category }
-        binding.playerSponsorBadge.isVisible = category != null
-        binding.playerSponsorBadge.chipIcon = SponsorBlockLabelHelper.categoryIcon(category)?.let { context.getDrawable(it) }
-        binding.playerSponsorBadge.text = SponsorBlockLabelHelper.categoryLabel(category)?.let { context.getString(it) }
-    }
 
     @SuppressLint("SetTextI18n")
     fun setStreams(streams: Streams) {
@@ -166,6 +153,5 @@ class DescriptionLayout(
 
     companion object {
         private const val ANIMATION_DURATION = 250L
-        private const val SB_SPONSOR_CATEGORY = "sponsor_category"
     }
 }

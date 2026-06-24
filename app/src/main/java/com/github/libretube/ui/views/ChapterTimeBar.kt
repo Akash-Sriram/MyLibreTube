@@ -22,7 +22,7 @@ import com.github.libretube.extensions.dpToPx
 class ChapterTimeBar(
     context: Context,
     attributeSet: AttributeSet? = null,
-) : MarkableTimeBar(context, attributeSet) {
+) : DismissableTimeBar(context, attributeSet) {
     private var chapters = listOf<ChapterSegment>()
     private var length: Int = 0
 

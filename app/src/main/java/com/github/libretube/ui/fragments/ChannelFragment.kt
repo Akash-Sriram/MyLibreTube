@@ -27,7 +27,6 @@ import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.ui.adapters.VideosAdapter
 import com.github.libretube.ui.base.DynamicLayoutManagerFragment
 import com.github.libretube.ui.dialogs.ShareDialog
-import com.github.libretube.ui.extensions.setupSubscriptionButton
 import com.github.libretube.ui.sheets.ChannelOptionsBottomSheet
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
@@ -133,16 +132,9 @@ class ChannelFragment : Fragment(R.layout.fragment_channel) {
 
         val channelId = channelId ?: return@launch
 
-        var isSubscribed = false
-        binding.channelSubscribe.setupSubscriptionButton(
-            channelId,
-            response.name.orEmpty(),
-            response.avatarUrl,
-            response.verified,
-            binding.notificationBell
-        ) {
-            isSubscribed = it
-        }
+        val isSubscribed = false
+        binding.channelSubscribe.isGone = true
+        binding.notificationBell.isGone = true
 
         binding.showMore.setOnClickListener {
             ChannelOptionsBottomSheet()

@@ -295,7 +295,6 @@ object BackupHelper {
             }
         }
 
-        // re-schedule the notification worker as some settings related to it might have changed
-        NotificationHelper.enqueueWork(context, ExistingPeriodicWorkPolicy.UPDATE)
+
     }
 }

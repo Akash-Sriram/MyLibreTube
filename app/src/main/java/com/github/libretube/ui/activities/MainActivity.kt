@@ -53,11 +53,8 @@ import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.ui.dialogs.ErrorDialog
 import com.github.libretube.ui.dialogs.ImportTempPlaylistDialog
 import com.github.libretube.ui.extensions.onSystemInsets
-import com.github.libretube.ui.fragments.DownloadsFragment
-import com.github.libretube.ui.models.DownloadsViewModel
 import com.github.libretube.ui.models.PlaylistViewModel
 import com.github.libretube.ui.models.SearchViewModel
-import com.github.libretube.ui.models.SubscriptionsViewModel
 import com.github.libretube.ui.preferences.BackupRestoreSettings
 import com.github.libretube.ui.preferences.BackupRestoreSettings.Companion.FILETYPE_ANY
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -71,8 +68,6 @@ class MainActivity : AbstractPlayerHostActivity() {
     lateinit var navController: NavController
     private var startFragmentId = R.id.homeFragment
 
-    private val subscriptionsViewModel: SubscriptionsViewModel by viewModels()
-
     // search related stuff
     private lateinit var searchView: SearchView
     lateinit var searchItem: MenuItem
@@ -80,7 +75,6 @@ class MainActivity : AbstractPlayerHostActivity() {
     private var shouldOpenSuggestions = true
     private var currentSearchType: SearchType = SearchType.ONLINE
     private val searchViewModel: SearchViewModel by viewModels()
-    private val downloadViewModel: DownloadsViewModel by viewModels()
     private val playlistViewModel: PlaylistViewModel by viewModels()
 
     // registering for activity results is only possible, this here should have been part of
@@ -315,22 +309,19 @@ class MainActivity : AbstractPlayerHostActivity() {
         // automatically set a different search icon in the playlists
         navController.addOnDestinationChangedListener { _, destination, _ ->
             currentSearchType = when (destination.id) {
-                R.id.downloadsFragment -> SearchType.DOWNLOADS
                 R.id.playlistFragment -> SearchType.PLAYLIST
                 else -> SearchType.ONLINE
             }
             // clear query in unused page so that they're reset when visiting the page the next time
-            if (currentSearchType != SearchType.DOWNLOADS) downloadViewModel.setQuery(null)
             if (currentSearchType != SearchType.PLAYLIST) playlistViewModel.setQuery(null)
 
             val searchIconResource = when (currentSearchType) {
-                SearchType.DOWNLOADS -> R.drawable.ic_download_search
                 SearchType.PLAYLIST -> R.drawable.ic_playlist_search
                 SearchType.ONLINE -> R.drawable.ic_search
             }
 
             searchItem.setIcon(searchIconResource)
-            searchItem.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
+            searchItem.isVisible = currentSearchType == SearchType.PLAYLIST
 
             val isLibraryScreen = destination.id == R.id.libraryFragment
             menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
@@ -401,10 +392,6 @@ class MainActivity : AbstractPlayerHostActivity() {
                     SearchType.PLAYLIST -> {
                         playlistViewModel.setQuery(newText)
                     }
-
-                    SearchType.DOWNLOADS -> {
-                        downloadViewModel.setQuery(newText)
-                    }
                 }
 
                 return true
@@ -426,7 +413,7 @@ class MainActivity : AbstractPlayerHostActivity() {
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-                item.isVisible = currentSearchType == SearchType.PLAYLIST || currentSearchType == SearchType.DOWNLOADS
+                item.isVisible = currentSearchType == SearchType.PLAYLIST
                 val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
                 menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
                 menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
@@ -500,11 +487,7 @@ class MainActivity : AbstractPlayerHostActivity() {
             savedSearchQuery = it
         }
 
-        // Open the Downloads screen if requested
-        if (intent?.getBooleanExtra(IntentData.OPEN_DOWNLOADS, false) == true) {
-            navController.navigate(R.id.downloadsFragment)
-            return
-        }
+
 
         if (intent?.getBooleanExtra("open_watch_history", false) == true) {
             intent?.removeExtra("open_watch_history")
@@ -520,17 +503,8 @@ class MainActivity : AbstractPlayerHostActivity() {
             when (it) {
                 TopLevelDestination.Home.route -> navController.navigate(R.id.homeFragment)
                 TopLevelDestination.Trends.route -> navController.navigate(R.id.trendsFragment)
-                TopLevelDestination.Subscriptions.route -> navController.navigate(R.id.subscriptionsFragment)
                 TopLevelDestination.Library.route -> navController.navigate(R.id.libraryFragment)
             }
-        }
-
-        // Rebind the download service if the user is currently downloading
-        if (intent?.getBooleanExtra(IntentData.downloading, false) == true) {
-            (supportFragmentManager.fragments.find { it is NavHostFragment })
-                ?.childFragmentManager?.fragments?.forEach { fragment ->
-                    (fragment as? DownloadsFragment)?.bindDownloadService()
-                }
         }
     }
 
@@ -603,9 +577,7 @@ class MainActivity : AbstractPlayerHostActivity() {
     }
 
     private fun navigateToBottomSelectedItem(item: MenuItem): Boolean {
-        if (item.itemId == R.id.subscriptionsFragment) {
-            binding.bottomNav.removeBadge(R.id.subscriptionsFragment)
-        }
+
 
         // Remove focus from search view when navigating to bottom view.
         searchItem.collapseActionView()

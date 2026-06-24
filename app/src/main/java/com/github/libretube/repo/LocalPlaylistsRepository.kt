@@ -8,6 +8,7 @@ import com.github.libretube.api.obj.Playlists
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.db.DatabaseHolder
 import com.github.libretube.db.obj.LocalPlaylist
+import com.github.libretube.helpers.PlaylistCategoryScanner
 import com.github.libretube.extensions.parallelMap
 import com.github.libretube.obj.PipedImportPlaylist
 
@@ -66,6 +67,9 @@ class LocalPlaylistsRepository: PlaylistRepository {
                 }
             }
         }
+
+        // Kick the background scanner so newly-added items get categorized
+        PlaylistCategoryScanner.restartScan(com.github.libretube.LibreTubeApp.instance.applicationContext)
 
         return true
     }

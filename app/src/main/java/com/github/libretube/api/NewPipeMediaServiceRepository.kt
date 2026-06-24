@@ -8,13 +8,11 @@ import com.github.libretube.api.obj.ChapterSegment
 import com.github.libretube.api.obj.Comment
 import com.github.libretube.api.obj.CommentsPage
 import com.github.libretube.api.obj.ContentItem
-import com.github.libretube.api.obj.DeArrowContent
 import com.github.libretube.api.obj.MetaInfo
 import com.github.libretube.api.obj.PipedStream
 import com.github.libretube.api.obj.Playlist
 import com.github.libretube.api.obj.PreviewFrames
 import com.github.libretube.api.obj.SearchResult
-import com.github.libretube.api.obj.SegmentData
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.api.obj.StreamItem.Companion.TYPE_CHANNEL
 import com.github.libretube.api.obj.StreamItem.Companion.TYPE_PLAYLIST
@@ -291,12 +289,8 @@ class NewPipeMediaServiceRepository : MediaServiceRepository {
         val respAsync = async {
             StreamInfo.getInfo("$YOUTUBE_FRONTEND_URL/watch?v=$videoId")
         }
-        val dislikesAsync = async {
-            if (PlayerHelper.localRYD) runCatching {
-                RetrofitInstance.externalApi.getVotes(videoId).dislikes
-            }.getOrElse { -1 } else -1
-        }
-        val (resp, dislikes) = Pair(respAsync.await(), dislikesAsync.await())
+        val resp = respAsync.await()
+        val dislikes = -1L
 
         Streams(
             title = resp.name,
@@ -368,29 +362,7 @@ class NewPipeMediaServiceRepository : MediaServiceRepository {
         )
     }
 
-    override suspend fun getSegments(
-        videoId: String, category: List<String>, actionType: List<String>?
-    ): SegmentData = RetrofitInstance.externalApi.getSegments(
-        // use hashed video id for privacy
-        // https://wiki.sponsor.ajay.app/w/API_Docs#GET_/api/skipSegments/:sha256HashPrefix
-        videoId.sha256Sum().substring(0, 4), category, actionType
-    ).first { it.videoID == videoId }
 
-    override suspend fun getDeArrowContent(videoId: String): DeArrowContent? =
-        runCatching {
-            RetrofitInstance.externalApi.getDeArrowContent(
-                // use hashed video id for privacy
-                // https://wiki.sponsor.ajay.app/w/API_Docs/DeArrow#GET_/api/branding/:sha256HashPrefix
-                videoId.sha256Sum().substring(0, 4)
-            )
-        }.getOrDefault(emptyMap())[videoId]?.let { value ->
-            value.copy(
-                thumbnails = value.thumbnails.map { thumbnail ->
-                    thumbnail.takeIf { it.original } ?: thumbnail.copy(
-                        thumbnail = "${DEARROW_THUMBNAIL_URL}?videoID=$videoId&time=${thumbnail.timestamp}"
-                    )
-                })
-        }
 
     override suspend fun getSearchResults(searchQuery: String, filter: String): SearchResult {
         if (filter.startsWith("jiosaavn")) {

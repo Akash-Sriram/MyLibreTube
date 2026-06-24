@@ -18,7 +18,10 @@ data class LocalPlaylistItem(
     @ColumnInfo val uploaderUrl: String? = null,
     @ColumnInfo val uploaderAvatar: String? = null,
     @ColumnInfo val thumbnailUrl: String? = null,
-    @ColumnInfo val duration: Long? = null
+    @ColumnInfo val duration: Long? = null,
+    // Cached from stream info — null means not yet scanned
+    @ColumnInfo val category: String? = null,
+    @ColumnInfo val hasVideoStreams: Boolean? = null
 ) {
     fun toStreamItem(): StreamItem {
         return StreamItem(

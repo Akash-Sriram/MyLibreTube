@@ -18,13 +18,10 @@ import com.github.libretube.constants.IntentData
 import com.github.libretube.extensions.TAG
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.services.AbstractPlayerService
-import com.github.libretube.services.OfflinePlayerService
 import com.github.libretube.services.OnlinePlayerService
 import com.github.libretube.ui.activities.AbstractPlayerHostActivity
 import com.github.libretube.ui.activities.NoInternetActivity
 import com.github.libretube.ui.fragments.PlayerFragment
-import com.github.libretube.util.PlayingQueue
-import com.github.libretube.util.PlayingQueueMode
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
@@ -50,7 +47,7 @@ object BackgroundHelper {
         }
 
         val noInternet = ContextHelper.tryUnwrapActivity<NoInternetActivity>(context) != null
-        val service = if (playerData.isOffline) OfflinePlayerService::class.java else OnlinePlayerService::class.java
+        val service = OnlinePlayerService::class.java
         stopBackgroundPlay(context)
         startMediaService(context, service, bundleOf(
             IntentData.playerData to playerData,
@@ -60,16 +57,11 @@ object BackgroundHelper {
     }
 
     /**
-     * Stop the [OnlinePlayerService] or [OfflinePlayerService] service if it is running.
+     * Stop the [OnlinePlayerService] service if it is running.
      */
     fun stopBackgroundPlay(context: Context) {
-        arrayOf(
-            OnlinePlayerService::class.java,
-            OfflinePlayerService::class.java
-        ).forEach {
-            val intent = Intent(context, it)
-            context.stopService(intent)
-        }
+        val intent = Intent(context, OnlinePlayerService::class.java)
+        context.stopService(intent)
     }
 
     @OptIn(UnstableApi::class)
@@ -110,18 +102,14 @@ object BackgroundHelper {
     }
 
     /**
-     * Get the service class of the currently active player based on the playing queue mode
+     * Get the service class of the currently active player
      */
     fun getCurrentPlayerServiceClass(): Class<*> {
-        return if (PlayingQueue.queueMode == PlayingQueueMode.OFFLINE) {
-            OfflinePlayerService::class.java
-        } else {
-            OnlinePlayerService::class.java
-        }
+        return OnlinePlayerService::class.java
     }
 
     /**
-     * Start a media service for the currently active player (online or offline)
+     * Start a media service for the currently active player (online)
      * and pass the MediaController to the callback
      */
     fun startCurrentMediaService(

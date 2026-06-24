@@ -52,7 +52,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.libretube.R
 import com.github.libretube.api.JsonHelper
 import com.github.libretube.api.obj.ChapterSegment
-import com.github.libretube.api.obj.Segment
 import com.github.libretube.api.obj.Streams
 import com.github.libretube.compat.PictureInPictureCompat
 import com.github.libretube.compat.PictureInPictureParamsCompat
@@ -62,7 +61,6 @@ import com.github.libretube.db.DatabaseHolder
 import com.github.libretube.enums.FileType
 import com.github.libretube.enums.PlayerCommand
 import com.github.libretube.enums.PlayerEvent
-import com.github.libretube.enums.SbSkipOptions
 import com.github.libretube.enums.ShareObjectType
 import com.github.libretube.extensions.formatShort
 import com.github.libretube.extensions.parcelable
@@ -71,11 +69,9 @@ import com.github.libretube.extensions.toID
 import com.github.libretube.extensions.togglePlayPauseState
 import com.github.libretube.extensions.updateIfChanged
 import com.github.libretube.helpers.BackgroundHelper
-import com.github.libretube.helpers.DownloadHelper
 import com.github.libretube.helpers.ImageHelper
 import com.github.libretube.helpers.NavigationHelper
 import com.github.libretube.helpers.PlayerHelper
-import com.github.libretube.helpers.PlayerHelper.getCurrentSegment
 import com.github.libretube.helpers.JioSaavnHelper
 import com.github.libretube.helpers.MusicCategoryCache
 import com.github.libretube.helpers.ThemeHelper
@@ -83,19 +79,16 @@ import com.github.libretube.helpers.WindowHelper
 import com.github.libretube.obj.ShareData
 import com.github.libretube.parcelable.PlayerData
 import com.github.libretube.services.AbstractPlayerService
-import com.github.libretube.services.OfflinePlayerService
 import com.github.libretube.services.OnlinePlayerService
 import com.github.libretube.ui.activities.AbstractPlayerHostActivity
 import com.github.libretube.ui.activities.NoInternetActivity
 import com.github.libretube.ui.adapters.VideoCardsAdapter
 import com.github.libretube.ui.base.BaseActivity
 import com.github.libretube.ui.dialogs.AddToPlaylistDialog
-import com.github.libretube.ui.dialogs.PlayOfflineDialog
 import com.github.libretube.ui.dialogs.ShareDialog
 import com.github.libretube.ui.extensions.animateDown
 import com.github.libretube.ui.extensions.getSystemInsets
 import com.github.libretube.ui.extensions.setOnBackPressed
-import com.github.libretube.ui.extensions.setupSubscriptionButton
 import com.github.libretube.ui.interfaces.CustomPlayerCallback
 import com.github.libretube.ui.interfaces.TimeFrameReceiver
 import com.github.libretube.ui.listeners.SeekbarPreviewListener
@@ -230,12 +223,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
                 PictureInPictureCompat.setPictureInPictureParams(requireActivity(), pipParams)
             }
 
-            if (isPlaying && PlayerHelper.sponsorBlockEnabled) {
-                handler.postDelayed(
-                    this@PlayerFragment::checkForSegments,
-                    100
-                )
-            }
+
         }
 
         override fun onEvents(player: Player, events: Player.Events) {
@@ -305,7 +293,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             }
             maybeStreams?.let { streams ->
                 this@PlayerFragment.streams = streams
-                viewModel.segments.postValue(emptyList())
                 updatePlayerView()
             }
         }
@@ -325,12 +312,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
                 }
             }
 
-            // JSON-encode as work-around for https://github.com/androidx/media/issues/564
-            val segments: List<Segment>? =
-                mediaMetadata.extras?.getString(IntentData.segments)?.let {
-                    JsonHelper.json.decodeFromString(it)
-                }
-            viewModel.segments.postValue(segments.orEmpty())
         }
 
         /**
@@ -448,49 +429,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             playerControlsBinding.exoProgress.setChapters(it.orEmpty())
         }
 
-        viewModel.segments.observe(viewLifecycleOwner) { segments ->
-            binding.descriptionLayout.setSegments(segments)
-            playerControlsBinding.exoProgress.setSegments(segments)
-            playerControlsBinding.sbToggle.isVisible = segments.isNotEmpty()
-            getHighlight(segments)?.let {
-                lifecycleScope.launch(Dispatchers.IO) { initializeHighlight(it) }
-            }
-        }
-
-        val localDownloadVersion = runBlocking(Dispatchers.IO) {
-            DatabaseHolder.Database.downloadDao().findById(videoId)
-        }
-
-        if (!isOffline && localDownloadVersion != null && createNewSession) {
-            // the dialog must also be visible when in fullscreen, thus we need to use the activity's
-            // fragment manager and not the one from [PlayerFragment]
-            val fragmentManager = requireActivity().supportFragmentManager
-
-            fragmentManager.setFragmentResultListener(
-                PlayOfflineDialog.PLAY_OFFLINE_DIALOG_REQUEST_KEY, viewLifecycleOwner
-            ) { _, bundle ->
-                isOffline = bundle.getBoolean(IntentData.isPlayingOffline)
-
-                // start a new playback session - the method will read `isOffline` and decide whether
-                // to play the downloaded video based on it, so it's enough to set `isOffline` here
-                attachToPlayerService(playerData, true)
-            }
-
-            val downloadInfo = DownloadHelper.extractDownloadInfoText(
-                requireContext(),
-                localDownloadVersion
-            ).toTypedArray()
-
-            PlayOfflineDialog().apply {
-                arguments = bundleOf(
-                    IntentData.videoId to videoId,
-                    IntentData.videoTitle to localDownloadVersion.download.title,
-                    IntentData.downloadInfo to downloadInfo
-                )
-            }.show(fragmentManager, null)
-        } else {
-            attachToPlayerService(playerData, createNewSession)
-        }
+        attachToPlayerService(playerData, createNewSession)
 
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -529,21 +468,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
     }
 
     private fun attachToPlayerService(playerData: PlayerData, startNewSession: Boolean) {
-        val (serviceClass, args) = if (isOffline) {
-            val isNoInternet = activity is NoInternetActivity
-
-            OfflinePlayerService::class.java to bundleOf(
-                IntentData.videoId to videoId,
-                IntentData.playerData to playerData
-                    .copy(downloadTab = playerData.downloadTab ?: DownloadTab.VIDEO),
-                IntentData.noInternet to isNoInternet
-            )
-        } else {
-            OnlinePlayerService::class.java to bundleOf(
-                IntentData.playerData to playerData,
-                IntentData.audioOnly to false
-            )
-        }
+        val serviceClass = OnlinePlayerService::class.java
+        val args = bundleOf(
+            IntentData.playerData to playerData,
+            IntentData.audioOnly to false
+        )
 
         BackgroundHelper.startMediaService(
             requireContext(),
@@ -749,11 +678,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             PlayingQueue.getNext()?.let { next -> playNextVideo(next) }
         }
 
-        binding.relPlayerDownload.setOnClickListener {
-            if (!this::streams.isInitialized) return@setOnClickListener
 
-            DownloadHelper.startDownloadDialog(requireContext(), childFragmentManager, videoId)
-        }
 
         binding.relPlayerScreenshot.setOnClickListener {
             if (!this::streams.isInitialized) return@setOnClickListener
@@ -809,7 +734,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
         playerController.release()
         killPlayerFragment()
 
-        NavigationHelper.openAudioPlayerFragment(requireContext(), offlinePlayer = isOffline)
+        NavigationHelper.openAudioPlayerFragment(requireContext(), offlinePlayer = isOffline, noAutoVideoSwitch = true)
     }
 
     private fun updateFullscreenOrientation() {
@@ -1019,49 +944,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
         }
     }
 
-    private fun checkForSegments() {
-        if (!playerController.isPlaying || !PlayerHelper.sponsorBlockEnabled) return
-
-        handler.postDelayed(this::checkForSegments, 100)
-        if (viewModel.segments.value.isNullOrEmpty()) return
-
-        val segmentData = playerController.getCurrentSegment(
-            viewModel.segments.value.orEmpty(),
-            viewModel.sponsorBlockConfig
-        )
-
-        if (segmentData != null && commonPlayerViewModel.isMiniPlayerVisible.value != true) {
-            val (segment, sbSkipOption) = segmentData
-
-            val autoSkipTemporarilyDisabled =
-                !binding.player.sponsorBlockAutoSkip && sbSkipOption != SbSkipOptions.OFF
-
-            if (sbSkipOption in arrayOf(
-                    SbSkipOptions.AUTOMATIC_ONCE,
-                    SbSkipOptions.MANUAL
-                ) || autoSkipTemporarilyDisabled
-            ) {
-                playerBackgroundBinding.sbSkipBtn.isVisible = true
-                playerBackgroundBinding.sbSkipBtn.setOnClickListener {
-                    playerController.seekTo((segment.segmentStartAndEnd.second * 1000f).toLong())
-                    segment.skipped = true
-                }
-            }
-        } else {
-            playerBackgroundBinding.sbSkipBtn.isGone = true
-        }
-    }
-
     private fun setPlayerDefaults() {
-        // reset the player view
-        playerControlsBinding.exoProgress.clearSegments()
-        playerControlsBinding.sbToggle.isGone = true
-
         // reset the comments to become reloaded later
         commentsViewModel.reset()
-
-        // hide the button to skip SponsorBlock segments manually
-        playerBackgroundBinding.sbSkipBtn.isGone = true
 
         JioSaavnHelper.resetPlayerDefaults(playerBackgroundBinding)
 
@@ -1132,15 +1017,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
 
         setPlayerDefaults()
 
-        // Cache category so NavigationHelper can skip the video player on future plays
+        // Cache the music category for informational purposes.
+        // We no longer auto-redirect to AudioPlayerFragment for music videos;
+        // the video player handles music with its audio-only thumbnail layout.
         if (!isOffline) {
             val isMusic = streams.category == Streams.CATEGORY_MUSIC
             MusicCategoryCache.put(requireContext(), videoId, isMusic)
-            // Auto-redirect to audio player for music category videos
-            if (isMusic && PlayerHelper.autoMusicAudioMode) {
-                switchToAudioMode()
-                return
-            }
         }
 
         binding.player.useController = false
@@ -1187,17 +1069,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             showRelatedStreams()
         }
 
-        // update the subscribed state
-        if (streams.uploaderUrl != null) {
-            binding.playerSubscribe.setupSubscriptionButton(
-                streams.uploaderUrl!!.toID(),
-                streams.uploader,
-                streams.uploaderAvatar,
-                streams.uploaderVerified
-            )
-        } else {
-            binding.playerSubscribe.isGone = true
-        }
+        binding.playerSubscribe.isGone = true
 
         // seekbar preview setup
         playerControlsBinding.seekbarPreview.isGone = true
@@ -1219,22 +1091,14 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
             setFullscreen()
         }
 
-        // it's possible that the highlight segment was loaded before the streams info finished loading
-        // in this case, we have to initialize the video highlight chapter once again
-        getHighlight(viewModel.segments.value.orEmpty())?.let {
-            lifecycleScope.launch(Dispatchers.IO) { initializeHighlight(it) }
-        }
+
     }
 
     private suspend fun showRelatedStreams() {
         if (!PlayerHelper.relatedStreamsEnabled) return
 
         val relatedStreams = if (isOffline) {
-            withContext(Dispatchers.IO) {
-                DatabaseHolder.Database.downloadDao().getAll()
-                    .filter { it.download.videoId != videoId }
-                    .map { it.download.toStreamItem() }
-            }
+            emptyList()
         } else {
             streams.relatedStreams.filter { !it.title.isNullOrBlank() }
         }
@@ -1301,37 +1165,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player), CustomPlayerCallback 
 
     private suspend fun getTimeFrameReceiver(): TimeFrameReceiver? = withContext(Dispatchers.IO) {
         return@withContext if (isOffline) {
-            val downloadItems =
-                DatabaseHolder.Database.downloadDao().getDownloadById(videoId)?.downloadItems
-            downloadItems?.firstOrNull { it.path.exists() && it.type == FileType.VIDEO }?.path?.let {
-                OfflineTimeFrameReceiver(requireContext(), it)
-            }
+            null
         } else {
             if (!::streams.isInitialized) return@withContext null
 
             OnlineTimeFrameReceiver(requireContext(), streams.previewFrames)
         }
-    }
-
-    private fun getHighlight(segments: List<Segment>): Segment? {
-        return segments.firstOrNull { it.category == PlayerHelper.SPONSOR_HIGHLIGHT_CATEGORY }
-    }
-
-    private suspend fun initializeHighlight(highlight: Segment) {
-        val frameReceiver = getTimeFrameReceiver() ?: return
-
-        val highlightStart = highlight.segmentStartAndEnd.first.toLong()
-        val frame = withContext(Dispatchers.IO) {
-            frameReceiver.getFrameAtTime(highlightStart * 1000)
-        }
-        val highlightChapter = ChapterSegment(
-            title = getString(R.string.chapters_videoHighlight),
-            start = highlightStart,
-            highlightDrawable = frame?.toDrawable(requireContext().resources)
-        )
-        chaptersViewModel.chaptersLiveData.postValue(
-            chaptersViewModel.chapters.plus(highlightChapter).sortedBy { it.start }
-        )
     }
 
     /**

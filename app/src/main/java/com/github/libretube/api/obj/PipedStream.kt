@@ -1,12 +1,8 @@
 package com.github.libretube.api.obj
 
 import android.os.Parcelable
-import com.github.libretube.db.obj.DownloadItem
-import com.github.libretube.enums.FileType
-import com.github.libretube.helpers.ProxyHelper
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
-import kotlin.io.path.Path
 
 @Serializable
 @Parcelize
@@ -35,21 +31,5 @@ data class PipedStream(
     val lastModified: Long? = null,
     val isDrc: Boolean? = null,
     val xtags: String? = null,
-): Parcelable {
-    private fun getQualityString(videoId: String): String {
-        return "${videoId}_${quality?.replace(" ", "_")}_$format." +
-            mimeType?.split("/")?.last()
-    }
+): Parcelable
 
-    fun toDownloadItem(fileType: FileType, videoId: String) = DownloadItem(
-        type = fileType,
-        videoId = videoId,
-        fileName = getQualityString(videoId),
-        path = Path(""),
-        url = url?.let { ProxyHelper.unwrapUrl(it) },
-        format = format,
-        quality = quality,
-        language = audioTrackLocale,
-        downloadSize = contentLength
-    )
-}

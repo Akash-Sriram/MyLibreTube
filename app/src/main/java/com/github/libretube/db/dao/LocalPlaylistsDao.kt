@@ -43,4 +43,15 @@ interface LocalPlaylistsDao {
     @Query("SELECT * FROM localPlaylistItem WHERE playlistId = :playlistId AND videoId = :videoId LIMIT 1")
     suspend fun getPlaylistVideo(playlistId: String, videoId: String): LocalPlaylistItem?
 
+    /** Update the cached stream category info for a video across all playlists it appears in. */
+    @Query("UPDATE localPlaylistItem SET category = :category, hasVideoStreams = :hasVideoStreams WHERE videoId = :videoId")
+    suspend fun updateVideoCategory(videoId: String, category: String?, hasVideoStreams: Boolean)
+
+    /** Returns distinct video IDs that have never been categorized (category IS NULL). */
+    @Query("SELECT DISTINCT videoId FROM localPlaylistItem WHERE category IS NULL")
+    suspend fun getUncategorizedVideoIds(): List<String>
+
+    /** Total count of playlist items not yet categorized — used to show the scan prompt. */
+    @Query("SELECT COUNT(DISTINCT videoId) FROM localPlaylistItem WHERE category IS NULL")
+    suspend fun countUncategorized(): Int
 }
