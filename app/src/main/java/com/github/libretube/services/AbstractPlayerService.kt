@@ -60,10 +60,7 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
 
     val handler = Handler(Looper.getMainLooper())
 
-    private val watchPositionTimer = PauseableTimer(
-        onTick = ::saveWatchPosition,
-        delayMillis = PlayerHelper.WATCH_POSITION_TIMER_DELAY_MS
-    )
+
 
 
 
@@ -77,13 +74,6 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-
-            // Start or pause watch position timer
-            if (isPlaying) {
-                watchPositionTimer.resume()
-            } else {
-                watchPositionTimer.pause()
-            }
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -96,7 +86,6 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
 
             when (playbackState) {
                 Player.STATE_ENDED -> {
-                    saveWatchPosition()
                 }
 
                 Player.STATE_READY -> {
@@ -282,9 +271,7 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
     abstract val isOfflinePlayer: Boolean
     var isAudioOnlyPlayer: Boolean = false
 
-    val watchPositionsEnabled
-        get() =
-            (PlayerHelper.watchPositionsAudio && isAudioOnlyPlayer) || (PlayerHelper.watchPositionsVideo && !isAudioOnlyPlayer)
+
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaLibrarySession
@@ -370,11 +357,6 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
         isTransitioning = true
     }
 
-    private fun saveWatchPosition() {
-        if (isTransitioning || !watchPositionsEnabled || !::videoId.isInitialized) return
-
-        exoPlayer?.let { PlayerHelper.saveWatchPosition(it, videoId) }
-    }
 
     override fun onMediaButtonEvent(
         session: MediaSession,
@@ -416,10 +398,10 @@ abstract class AbstractPlayerService : MediaLibraryService(), MediaLibrarySessio
         // java.lang.SecurityException: Session rejected the connection request.
         // because there can't be two active playerControllers at the same time.
         handler.postDelayed(50) {
-            saveWatchPosition()
+            
 
             notificationProvider = null
-            watchPositionTimer.destroy()
+            
 
             handler.removeCallbacksAndMessages(null)
 

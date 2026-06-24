@@ -63,16 +63,14 @@ class SearchResultFragment : DynamicLayoutManagerFragment(R.layout.fragment_sear
                 ) {
                     R.id.chip_all -> "all"
                     R.id.chip_videos -> "videos"
-                    R.id.chip_channels -> "channels"
+
                     R.id.chip_playlists -> "playlists"
                     R.id.chip_music_songs -> "music_songs"
                     R.id.chip_music_videos -> "music_videos"
                     R.id.chip_music_albums -> "music_albums"
                     R.id.chip_music_playlists -> "music_playlists"
-                    R.id.chip_music_artists -> "music_artists"
                     R.id.chip_jiosaavn -> "jiosaavn"
                     R.id.chip_jiosaavn_albums -> "jiosaavn_albums"
-                    R.id.chip_jiosaavn_artists -> "jiosaavn_artists"
                     R.id.chip_jiosaavn_playlists -> "jiosaavn_playlists"
                     else -> throw IllegalArgumentException("Filter out of range")
                 }

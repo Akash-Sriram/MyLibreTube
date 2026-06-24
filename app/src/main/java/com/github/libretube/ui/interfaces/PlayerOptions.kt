@@ -8,5 +8,4 @@ interface PlayerOptions {
     fun onCaptionsClicked()
     fun onQualityClicked()
     fun onAudioStreamClicked()
-    fun onStatsClicked()
 }

@@ -8,9 +8,7 @@ import com.github.libretube.R
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.constants.IntentData
 import com.github.libretube.constants.PreferenceKeys
-import com.github.libretube.db.DatabaseHelper
 import com.github.libretube.db.DatabaseHolder
-import com.github.libretube.db.obj.WatchPosition
 import com.github.libretube.enums.ShareObjectType
 import com.github.libretube.extensions.parcelable
 import com.github.libretube.extensions.toID
@@ -94,27 +92,6 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
                 R.string.add_to_queue -> {
                     PlayingQueue.add(streamItem)
                 }
-
-                R.string.mark_as_watched -> {
-                    val watchPosition = WatchPosition(videoId, Long.MAX_VALUE)
-                    withContext(Dispatchers.IO) {
-                        DatabaseHolder.Database.watchPositionDao().insert(watchPosition)
-
-                        if (PlayerHelper.watchHistoryEnabled) {
-                            DatabaseHelper.addToWatchHistory(streamItem.toWatchHistoryItem(videoId))
-                        }
-                    }
-
-                    setFragmentResult(VIDEO_OPTIONS_SHEET_REQUEST_KEY, bundleOf())
-                }
-
-                R.string.mark_as_unwatched -> {
-                    withContext(Dispatchers.IO) {
-                        DatabaseHolder.Database.watchPositionDao().deleteByVideoId(videoId)
-                        DatabaseHolder.Database.watchHistoryDao().deleteByVideoId(videoId)
-                    }
-                    setFragmentResult(VIDEO_OPTIONS_SHEET_REQUEST_KEY, bundleOf())
-                }
             }
         }
 
@@ -129,23 +106,6 @@ class VideoOptionsBottomSheet : BaseBottomSheet() {
         if (PlayingQueue.isNotEmpty() && PlayingQueue.queueMode == PlayingQueueMode.ONLINE) {
             optionsList += R.string.play_next
             optionsList += R.string.add_to_queue
-        }
-
-        // show the mark as watched or unwatched option if watch positions are enabled
-        if (PlayerHelper.watchPositionsAny || PlayerHelper.watchHistoryEnabled) {
-            val watchHistoryEntry = runBlocking(Dispatchers.IO) {
-                DatabaseHolder.Database.watchHistoryDao().findById(videoId)
-            }
-
-            val position = DatabaseHelper.getWatchPositionBlocking(videoId) ?: 0
-            val isCompleted = DatabaseHelper.isVideoWatched(position, streamItem.duration ?: 0)
-            if (position != 0L || watchHistoryEntry != null) {
-                optionsList += R.string.mark_as_unwatched
-            }
-
-            if (!isCompleted || watchHistoryEntry == null) {
-                optionsList += R.string.mark_as_watched
-            }
         }
 
         return optionsList

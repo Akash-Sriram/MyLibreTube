@@ -93,18 +93,10 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
             }
         })
 
-        binding.chipContinue.isChecked = viewModel.selectedStatusFilter in arrayOf(0, 1)
-        binding.chipFinished.isChecked = viewModel.selectedStatusFilter in arrayOf(0, 2)
-
-        val watchPositionItem = arrayOf(getString(R.string.also_clear_watch_positions))
-        val selected = booleanArrayOf(false)
-
         binding.clear.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.clear_history)
-                .setMultiChoiceItems(watchPositionItem, selected) { _, index, newValue ->
-                    selected[index] = newValue
-                }
+                .setMessage(R.string.clear_history)
                 .setPositiveButton(R.string.okay) { _, _ ->
                     binding.watchHistoryRecView.isGone = true
                     binding.historyEmpty.isVisible = true
@@ -115,7 +107,6 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
                     lifecycleScope.launch(Dispatchers.IO) {
                         Database.withTransaction {
                             Database.watchHistoryDao().deleteAll()
-                            if (selected[0]) Database.watchPositionDao().deleteAll()
                         }
                     }
                 }
@@ -123,16 +114,6 @@ class WatchHistoryFragment : DynamicLayoutManagerFragment(R.layout.fragment_watc
                 .show()
         }
 
-        binding.statusFilterChips.setOnCheckedStateChangeListener { _, checkedIds ->
-            val continueWatchingEnabled = checkedIds.contains(binding.chipContinue.id)
-            val finishedEnabled = checkedIds.contains(binding.chipFinished.id)
-            viewModel.selectedStatusFilter = when {
-                continueWatchingEnabled && finishedEnabled -> 0
-                continueWatchingEnabled -> 1
-                finishedEnabled -> 2
-                else -> 0
-            }
-        }
 
         binding.playAll.setOnClickListener {
             val history = viewModel.filteredWatchHistory.value.orEmpty()

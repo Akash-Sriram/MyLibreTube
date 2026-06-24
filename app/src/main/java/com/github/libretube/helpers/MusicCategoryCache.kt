@@ -1,37 +1,51 @@
 package com.github.libretube.helpers
 
 import android.content.Context
-import androidx.core.content.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
+
+// Extension property for DataStore
+private val Context.musicCategoryDataStore by preferencesDataStore(name = "music_category_cache")
 
 /**
  * Lightweight persistent cache mapping videoId → isMusicCategory.
- *
+ * Now backed by Preferences DataStore for thread-safe asynchronous I/O.
+ * 
  * On first play: PlayerFragment detects category from stream info and populates the cache.
  * On 2nd+ play:  NavigationHelper reads the cache and opens AudioPlayerFragment directly,
  *                completely skipping the video player initialization.
  */
 object MusicCategoryCache {
 
-    private const val PREFS_NAME = "music_category_cache"
-    // Limit cache size to avoid unbounded SharedPreferences growth
     private const val MAX_ENTRIES = 500
 
     // In-memory map for instant access within a session
-    private val memCache = HashMap<String, Boolean>(64)
+    private val memCache = ConcurrentHashMap<String, Boolean>(64)
     private var initialized = false
+    
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private fun prefs(context: Context) =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    /** Load SharedPreferences into memory on first access. */
-    private fun ensureLoaded(context: Context) {
+    /** Load DataStore into memory async on app launch. */
+    fun initializeAsync(context: Context) {
         if (initialized) return
-        synchronized(this) {
-            if (initialized) return
-            prefs(context).all.forEach { (k, v) ->
-                if (v is Boolean) memCache[k] = v
+        val appContext = context.applicationContext
+        scope.launch {
+            try {
+                val prefs = appContext.musicCategoryDataStore.data.first()
+                prefs.asMap().forEach { (k, v) ->
+                    if (v is Boolean) memCache[k.name] = v
+                }
+                initialized = true
+            } catch (e: Exception) {
+                // Ignore parsing errors on first run
             }
-            initialized = true
         }
     }
 
@@ -40,23 +54,32 @@ object MusicCategoryCache {
      * false if we know it is NOT music, null if we have never seen it.
      */
     fun get(context: Context, videoId: String): Boolean? {
-        ensureLoaded(context)
+        // Fallback: if accessed before async init completes, just check what's in memCache.
+        // It might be a miss on the very first quick tap of a cold launch, but subsequent plays will hit.
         return memCache[videoId]
     }
 
     /**
      * Store whether a video is a music-category video.
-     * Call this after stream info is loaded in PlayerFragment.
+     * Call this after stream info is loaded in PlayerFragment or via Scanner.
      */
     fun put(context: Context, videoId: String, isMusic: Boolean) {
-        ensureLoaded(context)
         memCache[videoId] = isMusic
-        val p = prefs(context)
-        // Evict oldest entries when cache is full
-        if (p.all.size >= MAX_ENTRIES) {
-            val toRemove = p.all.keys.take(MAX_ENTRIES / 4)
-            p.edit { toRemove.forEach { remove(it) } }
+        val appContext = context.applicationContext
+        
+        scope.launch {
+            try {
+                appContext.musicCategoryDataStore.edit { prefs ->
+                    // Evict oldest entries when cache is full
+                    if (prefs.asMap().size >= MAX_ENTRIES) {
+                        val toRemove = prefs.asMap().keys.take(MAX_ENTRIES / 4)
+                        toRemove.forEach { prefs.remove(it) }
+                    }
+                    prefs[booleanPreferencesKey(videoId)] = isMusic
+                }
+            } catch (e: Exception) {
+                // Ignore write errors
+            }
         }
-        p.edit { putBoolean(videoId, isMusic) }
     }
 }

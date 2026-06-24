@@ -143,6 +143,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.preference)
+    implementation(libs.androidx.datastore)
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.collection)

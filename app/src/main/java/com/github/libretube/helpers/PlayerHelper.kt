@@ -40,7 +40,6 @@ import com.github.libretube.api.obj.Streams
 import com.github.libretube.api.obj.Subtitle
 import com.github.libretube.constants.PreferenceKeys
 import com.github.libretube.db.DatabaseHolder
-import com.github.libretube.db.obj.WatchPosition
 import com.github.libretube.enums.PlayerEvent
 import com.github.libretube.extensions.seekBy
 import com.github.libretube.extensions.togglePlayPauseState
@@ -160,20 +159,6 @@ object PlayerHelper {
             false
         )
 
-    private val watchPositionsPref: String
-        get() = PreferenceHelper.getString(
-            PreferenceKeys.WATCH_POSITIONS,
-            "always"
-        )
-
-    val watchPositionsVideo: Boolean
-        get() = watchPositionsPref in listOf("always", "videos")
-
-    val watchPositionsAudio: Boolean
-        get() = watchPositionsPref in listOf("always", "audio")
-
-    val watchPositionsAny: Boolean
-        get() = watchPositionsVideo || watchPositionsAudio
 
     val watchHistoryEnabled: Boolean
         get() = PreferenceHelper.getBoolean(
@@ -475,7 +460,7 @@ object PlayerHelper {
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .setTrackSelector(trackSelector)
             .setHandleAudioBecomingNoisy(true)
-            .setLoadControl(getLoadControl())
+            .setLoadControl(getLoadControl(context))
             .setAudioAttributes(audioAttributes, handleAudioFocus)
             .build()
             .apply {
@@ -484,18 +469,28 @@ object PlayerHelper {
     }
 
     /**
-     * Get the load controls for the player (buffering, etc)
+     * Get the load controls for the player (buffering, etc).
+     * Network-aware: Aggressive buffering on Wi-Fi to prevent interruptions,
+     * conservative buffering on metered networks (cellular) to save data/battery.
      */
     @OptIn(androidx.media3.common.util.UnstableApi::class)
-    fun getLoadControl(): LoadControl {
+    fun getLoadControl(context: Context): LoadControl {
+        val isMetered = com.github.libretube.helpers.NetworkHelper.isNetworkMetered(context)
+        
+        // On unmetered networks (Wi-Fi), buffer up to 3 minutes ahead.
+        // On metered networks (Cellular), buffer up to 30 seconds to save bandwidth.
+        val targetBufferDurationMs = if (isMetered) 30_000 else 180_000
+
         return DefaultLoadControl.Builder()
-            // cache the last three minutes
+            // cache the last three minutes backwards
             .setBackBuffer(1000 * 60 * 3, true)
             .setBufferDurationsMs(
                 MINIMUM_BUFFER_DURATION,
-                max(bufferingGoal, MINIMUM_BUFFER_DURATION),
-                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+                max(bufferingGoal, targetBufferDurationMs),
+                // Lower initial playback buffer from default 2.5s to 1.5s for faster start
+                1500,
+                // Lower rebuffer playback buffer from default 5.0s to 2.5s
+                2500
             )
             .build()
     }
@@ -790,17 +785,6 @@ object PlayerHelper {
         player.isPlaying -> R.drawable.ic_pause
         player.playbackState == Player.STATE_ENDED -> R.drawable.ic_restart
         else -> R.drawable.ic_play
-    }
-
-    fun saveWatchPosition(player: Player, videoId: String) {
-        if (player.duration == C.TIME_UNSET || player.currentPosition in listOf(0L, C.TIME_UNSET)) {
-            return
-        }
-
-        val watchPosition = WatchPosition(videoId, player.currentPosition)
-        CoroutineScope(Dispatchers.IO).launch {
-            DatabaseHolder.Database.watchPositionDao().insert(watchPosition)
-        }
     }
 
     /**

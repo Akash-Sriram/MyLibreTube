@@ -41,14 +41,7 @@ class WatchHistoryModel : ViewModel() {
         }
 
     private suspend fun WatchHistoryItem.shouldIncludeByFilters(): Boolean {
-        // no watch position filter
-        if (selectedStatusFilter == 0) return true
-
-        return when (selectedStatusFilter) {
-            1 -> DatabaseHelper.filterByWatchStatus(this)
-            2 -> DatabaseHelper.filterByWatchStatus(this, false)
-            else -> throw IllegalArgumentException()
-        }
+        return true
     }
 
     fun fetchNextPage() = viewModelScope.launch(Dispatchers.IO) {

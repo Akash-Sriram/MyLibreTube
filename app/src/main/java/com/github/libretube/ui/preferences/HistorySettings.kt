@@ -34,14 +34,7 @@ class HistorySettings : BasePreferenceFragment() {
             true
         }
 
-        // clear watch positions
-        val clearWatchPositions = findPreference<Preference>(PreferenceKeys.CLEAR_WATCH_POSITIONS)
-        clearWatchPositions?.setOnPreferenceClickListener {
-            showClearDialog(R.string.reset_watch_positions) {
-                Database.watchPositionDao().deleteAll()
-            }
-            true
-        }
+
 
         val resetBookmarks = findPreference<Preference>(PreferenceKeys.CLEAR_BOOKMARKS)
         resetBookmarks?.setOnPreferenceClickListener {

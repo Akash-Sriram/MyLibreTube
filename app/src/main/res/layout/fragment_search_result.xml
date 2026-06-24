@@ -70,49 +70,9 @@
                     android:text="@string/all" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_videos"
-                    style="@style/Chip"
-                    android:text="@string/videos" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_channels"
-                    style="@style/Chip"
-                    android:text="@string/channels" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_playlists"
-                    style="@style/Chip"
-                    android:text="@string/playlists" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_music_songs"
-                    style="@style/Chip"
-                    android:text="@string/music_songs" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_music_videos"
-                    style="@style/Chip"
-                    android:text="@string/music_videos" />
-
-                <com.google.android.material.chip.Chip
                     android:id="@+id/chip_music_albums"
                     style="@style/Chip"
                     android:text="@string/music_albums" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_music_playlists"
-                    style="@style/Chip"
-                    android:text="@string/music_playlists" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_music_artists"
-                    style="@style/Chip"
-                    android:text="@string/music_artists" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_jiosaavn"
-                    style="@style/Chip"
-                    android:text="JioSaavn Songs" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_jiosaavn_albums"
@@ -120,14 +80,40 @@
                     android:text="JioSaavn Albums" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_jiosaavn_artists"
+                    android:id="@+id/chip_music_songs"
                     style="@style/Chip"
-                    android:text="JioSaavn Artists" />
+                    android:text="@string/music_songs" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_jiosaavn"
+                    style="@style/Chip"
+                    android:text="JioSaavn Songs" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_music_playlists"
+                    style="@style/Chip"
+                    android:text="@string/music_playlists" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_jiosaavn_playlists"
                     style="@style/Chip"
                     android:text="JioSaavn Playlists" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_videos"
+                    style="@style/Chip"
+                    android:text="@string/videos" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_music_videos"
+                    style="@style/Chip"
+                    android:text="@string/music_videos" />
+
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_playlists"
+                    style="@style/Chip"
+                    android:text="@string/playlists" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 

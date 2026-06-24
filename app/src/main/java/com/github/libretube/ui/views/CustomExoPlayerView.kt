@@ -77,7 +77,6 @@ import com.github.libretube.ui.sheets.ChaptersBottomSheet
 import com.github.libretube.ui.sheets.PlaybackOptionsSheet
 import com.github.libretube.ui.sheets.PlayingQueueSheet
 import com.github.libretube.ui.sheets.SleepTimerSheet
-import com.github.libretube.ui.sheets.StatsSheet
 import com.github.libretube.ui.tools.SleepTimer
 import com.github.libretube.util.PlayingQueue
 import java.util.Locale
@@ -640,13 +639,8 @@ class CustomExoPlayerView(
             }
         ) {
             onCaptionsClicked()
-        },
-        BottomSheetItem(
-            context.getString(R.string.stats_for_nerds),
-            R.drawable.ic_info
-        ) {
-            onStatsClicked()
         }
+
     )
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
@@ -1107,15 +1101,6 @@ class CustomExoPlayerView(
         baseBottomSheet.show(supportFragmentManager)
     }
 
-    override fun onStatsClicked() {
-        val player = player ?: return
-
-        val videoStats =
-            PlayerHelper.getVideoStats(player.currentTracks, playerCallback.getVideoId())
-        StatsSheet()
-            .apply { arguments = bundleOf(IntentData.videoStats to videoStats) }
-            .show(supportFragmentManager)
-    }
 
     fun isFullscreen() = commonPlayerViewModel?.isFullscreen?.value ?: false
 

@@ -11,8 +11,6 @@ import com.github.libretube.R
 import com.github.libretube.constants.IntentData
 import com.github.libretube.databinding.QueueBottomSheetBinding
 import com.github.libretube.db.DatabaseHelper
-import com.github.libretube.db.DatabaseHolder
-import com.github.libretube.db.obj.WatchPosition
 import com.github.libretube.extensions.setActionListener
 import com.github.libretube.extensions.toID
 import com.github.libretube.ui.adapters.PlayingQueueAdapter
@@ -80,9 +78,6 @@ class PlayingQueueSheet : ExpandedBottomSheet(R.layout.queue_bottom_sheet) {
             dialog?.dismiss()
         }
 
-        binding.watchPositionsOptions.setOnClickListener {
-            showWatchPositionsOptions()
-        }
 
         binding.optionsRecycler.setActionListener(
             allowSwipe = true,
@@ -150,58 +145,7 @@ class PlayingQueueSheet : ExpandedBottomSheet(R.layout.queue_bottom_sheet) {
             .show()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    private fun showWatchPositionsOptions() {
-        val options = arrayOf(
-            getString(R.string.mark_as_watched),
-            getString(R.string.mark_as_unwatched),
-            getString(R.string.remove_watched_videos)
-        )
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.watch_positions)
-            .setItems(options) { _, index ->
-                when (index) {
-                    0 -> {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            PlayingQueue.getStreams().forEach {
-                                val videoId = it.url.orEmpty().toID()
-                                val duration = it.duration ?: 0
-                                val watchPosition = WatchPosition(videoId, duration * 1000)
-                                DatabaseHolder.Database.watchPositionDao().insert(watchPosition)
-                            }
-                        }
-                    }
 
-                    1 -> {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            PlayingQueue.getStreams().forEach {
-                                DatabaseHolder.Database.watchPositionDao()
-                                    .deleteByVideoId(it.url.orEmpty().toID())
-                            }
-                        }
-                    }
-
-                    2 -> {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val currentStream = PlayingQueue.getCurrent()
-                            val streams = DatabaseHelper
-                                .filterUnwatched(PlayingQueue.getStreams())
-                                .toMutableList()
-                            if (currentStream != null &&
-                                streams.none { it.url?.toID() == currentStream.url?.toID() }
-                            ) {
-                                streams.add(0, currentStream)
-                            }
-                            PlayingQueue.setStreams(streams)
-                            withContext(Dispatchers.Main) {
-                                _binding?.optionsRecycler?.adapter?.notifyDataSetChanged()
-                            }
-                        }
-                    }
-                }
-            }
-            .show()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

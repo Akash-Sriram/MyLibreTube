@@ -68,46 +68,8 @@ object DatabaseHelper {
         }
     }
 
-    suspend fun getWatchPosition(videoId: String) = Database.watchPositionDao().findById(videoId)?.position
-
-    fun getWatchPositionBlocking(videoId: String): Long? = runBlocking(Dispatchers.IO) {
-        getWatchPosition(videoId)
-    }
-
-    suspend fun isVideoWatched(videoId: String, duration: Long): Boolean =
-        withContext(Dispatchers.IO) {
-            val position = getWatchPosition(videoId) ?: return@withContext false
-
-            return@withContext isVideoWatched(position, duration)
-        }
-
-    fun isVideoWatched(positionMillis: Long, durationSeconds: Long?): Boolean {
-        if (durationSeconds == null) return false
-
-        val progress = positionMillis / 1000
-
-        return durationSeconds - progress <= ABSOLUTE_WATCHED_THRESHOLD && progress >= RELATIVE_WATCHED_THRESHOLD * durationSeconds
-    }
-
-    suspend fun filterUnwatched(streams: List<StreamItem>): List<StreamItem> {
-        return streams.filter {
-            !isVideoWatched(it.url.orEmpty().toID(), it.duration ?: 0)
-        }
-    }
-
-    /**
-     * @param unfinished If true, only returns unfinished videos. If false, only returns finished videos.
-     */
-    suspend fun filterByWatchStatus(
-        watchHistoryItem: WatchHistoryItem,
-        unfinished: Boolean = true
-    ): Boolean {
-        return unfinished xor isVideoWatched(watchHistoryItem.videoId, watchHistoryItem.duration ?: 0)
-    }
-
-    suspend fun filterByStreamTypeAndWatchPosition(
+    suspend fun filterByStreamType(
         streams: List<StreamItem>,
-        hideWatched: Boolean,
         showUpcoming: Boolean
     ): List<StreamItem> {
         val streamItems = streams.filter {
@@ -121,8 +83,6 @@ object DatabaseHelper {
                 else -> true
             }
         }
-        if (!hideWatched) return streamItems
-
-        return filterUnwatched(streamItems)
+        return streamItems
     }
 }

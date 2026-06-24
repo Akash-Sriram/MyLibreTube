@@ -92,6 +92,13 @@ object DatabaseHolder {
         }
     }
 
+    private val MIGRATION_25_26 = object : Migration(25, 26) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `customInstance`")
+            db.execSQL("DROP TABLE IF EXISTS `watchPosition`")
+        }
+    }
+
     val Database by lazy {
         Room.databaseBuilder(LibreTubeApp.instance, AppDatabase::class.java, DATABASE_NAME)
             .addMigrations(
@@ -104,6 +111,7 @@ object DatabaseHolder {
                 MIGRATION_21_22,
                 MIGRATION_22_23,
                 MIGRATION_24_25,
+                MIGRATION_25_26,
             )
             .fallbackToDestructiveMigration()
             .build()

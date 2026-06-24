@@ -51,6 +51,11 @@ class LibreTubeApp : Application() {
         PlaylistCategoryScanner.startAutoScan(applicationContext)
 
         /**
+         * Asynchronously load the music category DataStore into memory for instant access
+         */
+        com.github.libretube.helpers.MusicCategoryCache.initializeAsync(applicationContext)
+
+        /**
          * Handler for uncaught exceptions
          */
         val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
