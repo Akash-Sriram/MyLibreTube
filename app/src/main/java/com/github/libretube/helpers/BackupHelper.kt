@@ -72,7 +72,7 @@ object BackupHelper {
         WorkManager.getInstance(context)
             .enqueueUniquePeriodicWork(
                 AUTO_BACKUP_WORK_NAME,
-                ExistingPeriodicWorkPolicy.REPLACE,
+                ExistingPeriodicWorkPolicy.KEEP,
                 autoBackupWorker
             )
     }
