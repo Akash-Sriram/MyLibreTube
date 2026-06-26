@@ -60,8 +60,7 @@ open class BaseActivity : AppCompatActivity() {
                 setLocale(locale)
             }
 
-            val uiPref = PreferenceHelper.getString(PreferenceKeys.THEME_MODE, "A")
-            AppCompatDelegate.setDefaultNightMode(getThemeMode(uiPref))
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
 
         applyOverrideConfiguration(configuration)

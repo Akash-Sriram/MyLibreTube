@@ -151,16 +151,18 @@ object BackupHelper {
                 }
 
                 // Prune to keep last 5 in this folder
-                val files = folder.listFiles()
-                val backupFiles = files.filter { f ->
+                var backupFiles = folder.listFiles().filter { f ->
                     val name = f.name.orEmpty()
-                    name.startsWith("libretube-auto-backup-") && f.uri != documentFile?.uri
+                    name.startsWith("libretube-auto-backup-")
                 }
-                if (backupFiles.size > 4) {
-                    val sorted = backupFiles.sortedBy { it.name.orEmpty() }
-                    val toDeleteCount = sorted.size - 4
-                    for (i in 0 until toDeleteCount) {
-                        sorted[i].delete()
+                if (documentFile != null && backupFiles.none { it.uri == documentFile.uri }) {
+                    backupFiles = backupFiles + documentFile
+                }
+                if (backupFiles.size > 5) {
+                    val sortedDesc = backupFiles.sortedByDescending { it.name.orEmpty() }
+                    val toDelete = sortedDesc.drop(5)
+                    for (file in toDelete) {
+                        file.delete()
                     }
                 }
             } else {
@@ -174,14 +176,17 @@ object BackupHelper {
                     JsonHelper.json.encodeToStream(backupFile, outputStream)
                 }
 
-                val backupFiles = autoBackupDir.listFiles { _, name ->
-                    name.startsWith("libretube-auto-backup-") && name != file.name
+                var backupFiles = autoBackupDir.listFiles { _, name ->
+                    name.startsWith("libretube-auto-backup-")
+                }?.toList() ?: emptyList()
+                if (backupFiles.none { it.absolutePath == file.absolutePath }) {
+                    backupFiles = backupFiles + file
                 }
-                if (backupFiles != null && backupFiles.size > 4) {
-                    backupFiles.sortBy { it.name }
-                    val toDeleteCount = backupFiles.size - 4
-                    for (i in 0 until toDeleteCount) {
-                        backupFiles[i].delete()
+                if (backupFiles.size > 5) {
+                    val sortedDesc = backupFiles.sortedByDescending { it.name }
+                    val toDelete = sortedDesc.drop(5)
+                    for (f in toDelete) {
+                        f.delete()
                     }
                 }
             }
