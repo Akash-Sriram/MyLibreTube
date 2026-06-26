@@ -30,11 +30,7 @@ open class BaseActivity : AppCompatActivity() {
      */
     var hasCutout: Boolean = false
 
-    private var lastNightMode: Int = 0
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        lastNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-
         // set the app theme (e.g. Material You)
         ThemeHelper.updateTheme(this)
         if (isDialogActivity) ThemeHelper.applyDialogActivityTheme(this)
@@ -50,19 +46,6 @@ open class BaseActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        if (lastNightMode != newNightMode) {
-            lastNightMode = newNightMode
-            val uiPref = PreferenceHelper.getString(PreferenceKeys.THEME_MODE, "A")
-            if (uiPref == "A") {
-                AppCompatDelegate.setDefaultNightMode(ThemeHelper.getThemeMode(uiPref))
-                recreate()
-            }
-        }
     }
 
     override fun attachBaseContext(newBase: Context?) {

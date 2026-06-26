@@ -53,11 +53,11 @@ class MainSettings : BasePreferenceFragment() {
                         val files = folder.listFiles()
                         val backupFiles = files.filter { f ->
                             val name = f.name.orEmpty()
-                            name.startsWith("libretube-backup-") && !name.startsWith("libretube-auto-backup-")
+                            name.startsWith("libretube-backup-") && !name.startsWith("libretube-auto-backup-") && f.uri != documentFile?.uri
                         }
-                        if (backupFiles.size > 5) {
+                        if (backupFiles.size > 4) {
                             val sorted = backupFiles.sortedBy { it.name.orEmpty() }
-                            val toDeleteCount = sorted.size - 5
+                            val toDeleteCount = sorted.size - 4
                             for (i in 0 until toDeleteCount) {
                                 sorted[i].delete()
                             }

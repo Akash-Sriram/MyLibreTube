@@ -152,13 +152,13 @@ object BackupHelper {
 
                 // Prune to keep last 5 in this folder
                 val files = folder.listFiles()
-                val backupFiles = files.filter { file ->
-                    val name = file.name.orEmpty()
-                    name.startsWith("libretube-auto-backup-")
+                val backupFiles = files.filter { f ->
+                    val name = f.name.orEmpty()
+                    name.startsWith("libretube-auto-backup-") && f.uri != documentFile?.uri
                 }
-                if (backupFiles.size > 5) {
+                if (backupFiles.size > 4) {
                     val sorted = backupFiles.sortedBy { it.name.orEmpty() }
-                    val toDeleteCount = sorted.size - 5
+                    val toDeleteCount = sorted.size - 4
                     for (i in 0 until toDeleteCount) {
                         sorted[i].delete()
                     }
@@ -175,11 +175,11 @@ object BackupHelper {
                 }
 
                 val backupFiles = autoBackupDir.listFiles { _, name ->
-                    name.startsWith("libretube-auto-backup-")
+                    name.startsWith("libretube-auto-backup-") && name != file.name
                 }
-                if (backupFiles != null && backupFiles.size > 5) {
+                if (backupFiles != null && backupFiles.size > 4) {
                     backupFiles.sortBy { it.name }
-                    val toDeleteCount = backupFiles.size - 5
+                    val toDeleteCount = backupFiles.size - 4
                     for (i in 0 until toDeleteCount) {
                         backupFiles[i].delete()
                     }
