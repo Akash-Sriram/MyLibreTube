@@ -53,7 +53,7 @@ class MainSettings : BasePreferenceFragment() {
                         val files = folder.listFiles()
                         val backupFiles = files.filter { f ->
                             val name = f.name.orEmpty()
-                            name.startsWith("libretube-backup-") && name.endsWith(".json")
+                            name.startsWith("libretube-backup-") && !name.startsWith("libretube-auto-backup-")
                         }
                         if (backupFiles.size > 5) {
                             val sorted = backupFiles.sortedBy { it.name.orEmpty() }

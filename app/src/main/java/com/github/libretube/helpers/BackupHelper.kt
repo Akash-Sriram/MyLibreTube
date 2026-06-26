@@ -154,7 +154,7 @@ object BackupHelper {
                 val files = folder.listFiles()
                 val backupFiles = files.filter { file ->
                     val name = file.name.orEmpty()
-                    name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
+                    name.startsWith("libretube-auto-backup-")
                 }
                 if (backupFiles.size > 5) {
                     val sorted = backupFiles.sortedBy { it.name.orEmpty() }
@@ -175,7 +175,7 @@ object BackupHelper {
                 }
 
                 val backupFiles = autoBackupDir.listFiles { _, name ->
-                    name.startsWith("libretube-auto-backup-") && name.endsWith(".json")
+                    name.startsWith("libretube-auto-backup-")
                 }
                 if (backupFiles != null && backupFiles.size > 5) {
                     backupFiles.sortBy { it.name }
