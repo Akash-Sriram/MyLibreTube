@@ -51,19 +51,16 @@ open class BaseActivity : AppCompatActivity() {
     override fun attachBaseContext(newBase: Context?) {
         super.attachBaseContext(newBase)
 
-        val configuration = Configuration().apply {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                // TODO: remove this case in the future
-                @Suppress("DEPRECATION")
-                val locale = LocaleHelper.getAppLocale()
-                Locale.setDefault(locale)
-                setLocale(locale)
-            }
-
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            val configuration = Configuration(newBase?.resources?.configuration)
+            @Suppress("DEPRECATION")
+            val locale = LocaleHelper.getAppLocale()
+            Locale.setDefault(locale)
+            configuration.setLocale(locale)
+            applyOverrideConfiguration(configuration)
         }
 
-        applyOverrideConfiguration(configuration)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
 
     /**
