@@ -60,9 +60,11 @@ class MainSettings : BasePreferenceFragment() {
                         if (backupFiles.size > 5) {
                             val sortedDesc = backupFiles.sortedByDescending { it.name.orEmpty() }
                             val toDelete = sortedDesc.drop(5)
+                            var deletedCount = 0
                             for (file in toDelete) {
-                                file.delete()
+                                if (file.delete()) deletedCount++
                             }
+                            requireContext().toastFromMainDispatcher("Kept 5 backups, deleted $deletedCount old backups")
                         }
 
                         requireContext().toastFromMainDispatcher(R.string.backup_created_success_folder)

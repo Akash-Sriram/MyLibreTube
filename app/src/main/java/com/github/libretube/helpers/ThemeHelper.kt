@@ -30,11 +30,6 @@ object ThemeHelper {
         activity.setTheme(getTheme(accentColor))
         if (accentColor == "my") DynamicColors.applyToActivityIfAvailable(activity)
 
-        val pureThemeEnabled = PreferenceHelper.getBoolean(
-            PreferenceKeys.PURE_THEME,
-            true
-        )
-        if (pureThemeEnabled) activity.theme.applyStyle(R.style.Pure, true)
     }
 
     /**
