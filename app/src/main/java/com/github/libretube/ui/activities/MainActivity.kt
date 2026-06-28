@@ -299,13 +299,13 @@ class MainActivity : AbstractPlayerHostActivity() {
         val searchItem = menu.findItem(R.id.action_search)
         this.searchItem = searchItem
         searchView = searchItem.actionView as SearchView
-        searchView.setIconifiedByDefault(false)
-        val innerSearchIcon = searchView.findViewById<android.widget.ImageView>(androidx.appcompat.R.id.search_mag_icon)
-        innerSearchIcon?.setImageDrawable(null)
-        innerSearchIcon?.visibility = View.GONE
         
         val searchAutoComplete = searchView.findViewById<androidx.appcompat.widget.SearchView.SearchAutoComplete>(androidx.appcompat.R.id.search_src_text)
         searchAutoComplete?.hint = getString(R.string.search_hint)
+        
+        val innerSearchIcon = searchView.findViewById<android.widget.ImageView>(androidx.appcompat.R.id.search_mag_icon)
+        innerSearchIcon?.setImageDrawable(null)
+        innerSearchIcon?.visibility = View.GONE
 
         // automatically set a different search icon in the playlists
         destinationChangedListener?.let { navController.removeOnDestinationChangedListener(it) }
@@ -422,6 +422,7 @@ class MainActivity : AbstractPlayerHostActivity() {
                 item.setShowAsAction(
                     MenuItem.SHOW_AS_ACTION_ALWAYS or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW
                 )
+                searchView.isIconified = false
                 menu.findItem(R.id.action_create_playlist)?.isVisible = false
                 menu.findItem(R.id.action_settings)?.isVisible = false
                 return true
