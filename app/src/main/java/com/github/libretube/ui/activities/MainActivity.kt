@@ -434,7 +434,13 @@ class MainActivity : AbstractPlayerHostActivity() {
 
                 // If user clicks the UP arrow or swipes back while in SearchFragment, pop the fragment!
                 if (!shouldCollapse && currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
-                    navController.navigateUp()
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        if (navController.currentDestination?.id == R.id.searchResultFragment) {
+                            navController.popBackStack(R.id.searchFragment, true) || navController.popBackStack()
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
                 }
 
                 return shouldCollapse
