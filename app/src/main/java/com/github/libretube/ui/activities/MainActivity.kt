@@ -251,9 +251,7 @@ class MainActivity : AbstractPlayerHostActivity() {
 
         return id in listOf(
             R.id.searchFragment,
-            R.id.searchResultFragment,
-            R.id.channelFragment,
-            R.id.playlistFragment
+            R.id.searchResultFragment
         )
     }
 
