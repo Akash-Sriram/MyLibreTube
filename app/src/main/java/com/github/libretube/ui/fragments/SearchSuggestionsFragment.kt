@@ -64,7 +64,7 @@ class SearchSuggestionsFragment : Fragment(R.layout.fragment_search_suggestions)
                             result.historyList,
                             result.suggestionList
                         ) {
-                            binding.suggestionsRecycler.scrollToPosition(0)
+                            _binding?.suggestionsRecycler?.scrollToPosition(0)
                         }
                     }
                 }
@@ -79,12 +79,12 @@ class SearchSuggestionsFragment : Fragment(R.layout.fragment_search_suggestions)
     }
 
     private fun toggleEmptyHistoryMessageVisibility(show: Boolean) {
-        binding.historyEmpty.isVisible = show
-        binding.suggestionsRecycler.isGone = show
+        _binding?.historyEmpty?.isVisible = show
+        _binding?.suggestionsRecycler?.isGone = show
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
 
         _binding = null
     }
