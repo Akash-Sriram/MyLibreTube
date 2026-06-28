@@ -326,6 +326,13 @@ class MainActivity : AbstractPlayerHostActivity() {
                 searchItem.isVisible = true
                 if (!searchItem.isActionViewExpanded) {
                     searchItem.expandActionView()
+                    if (destination.id == R.id.searchResultFragment) {
+                        searchView.post {
+                            searchView.clearFocus()
+                            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                            imm.hideSoftInputFromWindow(searchView.windowToken, 0)
+                        }
+                    }
                 }
             } else {
                 searchItem.isVisible = currentSearchType == SearchType.PLAYLIST
