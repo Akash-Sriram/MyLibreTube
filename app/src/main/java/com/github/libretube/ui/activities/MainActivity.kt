@@ -432,9 +432,9 @@ class MainActivity : AbstractPlayerHostActivity() {
                     menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
                 }
 
-                // If user clicks the UP arrow while in SearchFragment, pop the fragment!
+                // If user clicks the UP arrow or swipes back while in SearchFragment, pop the fragment!
                 if (!shouldCollapse && currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
-                    this@MainActivity.onBackPressedDispatcher.onBackPressed()
+                    navController.navigateUp()
                 }
 
                 return shouldCollapse
