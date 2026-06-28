@@ -329,7 +329,7 @@ class MainActivity : AbstractPlayerHostActivity() {
                 }
             } else {
                 searchItem.isVisible = currentSearchType == SearchType.PLAYLIST
-                if (searchItem.isActionViewExpanded && currentSearchType == SearchType.ONLINE) {
+                if (searchItem.isActionViewExpanded) {
                     searchItem.collapseActionView()
                 }
             }
