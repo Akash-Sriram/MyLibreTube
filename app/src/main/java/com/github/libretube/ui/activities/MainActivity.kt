@@ -321,7 +321,18 @@ class MainActivity : AbstractPlayerHostActivity() {
             }
 
             searchItem.setIcon(searchIconResource)
-            searchItem.isVisible = currentSearchType == SearchType.PLAYLIST
+            
+            if (isSearchInProgress()) {
+                searchItem.isVisible = true
+                if (!searchItem.isActionViewExpanded) {
+                    searchItem.expandActionView()
+                }
+            } else {
+                searchItem.isVisible = currentSearchType == SearchType.PLAYLIST
+                if (searchItem.isActionViewExpanded && currentSearchType == SearchType.ONLINE) {
+                    searchItem.collapseActionView()
+                }
+            }
 
             val isLibraryScreen = destination.id == R.id.libraryFragment
             menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
@@ -400,7 +411,7 @@ class MainActivity : AbstractPlayerHostActivity() {
 
         searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
             override fun onMenuItemActionExpand(item: MenuItem): Boolean {
-                if (currentSearchType == SearchType.ONLINE && navController.currentDestination?.id != R.id.searchResultFragment) {
+                if (currentSearchType == SearchType.ONLINE && !isSearchInProgress()) {
                     searchViewModel.setQuery(null)
                     navController.navigate(R.id.openSearch)
                 }
@@ -413,17 +424,20 @@ class MainActivity : AbstractPlayerHostActivity() {
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-                item.isVisible = currentSearchType == SearchType.PLAYLIST
-                val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
-                menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
-                menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
+                val shouldCollapse = !isSearchInProgress()
+                if (shouldCollapse) {
+                    item.isVisible = currentSearchType == SearchType.PLAYLIST
+                    val isLibraryScreen = navController.currentDestination?.id == R.id.libraryFragment
+                    menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
+                    menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
+                }
 
-                // Handover back press to `BackPressedDispatcher` if not on a root destination and we are in ONLINE search mode
-                if (currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
+                // If user clicks the UP arrow while in SearchFragment, pop the fragment!
+                if (!shouldCollapse && currentSearchType == SearchType.ONLINE && navController.previousBackStackEntry != null) {
                     this@MainActivity.onBackPressedDispatcher.onBackPressed()
                 }
 
-                return true
+                return shouldCollapse
             }
         })
 
