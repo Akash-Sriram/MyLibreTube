@@ -71,6 +71,7 @@ class MainActivity : AbstractPlayerHostActivity() {
     // search related stuff
     private lateinit var searchView: SearchView
     lateinit var searchItem: MenuItem
+    private var destinationChangedListener: NavController.OnDestinationChangedListener? = null
     private var savedSearchQuery: String? = null
     private var shouldOpenSuggestions = true
     private var currentSearchType: SearchType = SearchType.ONLINE
@@ -307,7 +308,8 @@ class MainActivity : AbstractPlayerHostActivity() {
         searchAutoComplete?.hint = getString(R.string.search_hint)
 
         // automatically set a different search icon in the playlists
-        navController.addOnDestinationChangedListener { _, destination, _ ->
+        destinationChangedListener?.let { navController.removeOnDestinationChangedListener(it) }
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             currentSearchType = when (destination.id) {
                 R.id.playlistFragment -> SearchType.PLAYLIST
                 else -> SearchType.ONLINE
@@ -338,6 +340,8 @@ class MainActivity : AbstractPlayerHostActivity() {
             menu.findItem(R.id.action_create_playlist)?.isVisible = isLibraryScreen
             menu.findItem(R.id.action_settings)?.isVisible = isLibraryScreen
         }
+        destinationChangedListener = listener
+        navController.addOnDestinationChangedListener(listener)
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
@@ -452,6 +456,13 @@ class MainActivity : AbstractPlayerHostActivity() {
             searchItem.expandActionView()
             searchView.setQuery(savedSearchQuery, true)
             savedSearchQuery = null
+        }
+
+        // Fix state restoration bug: forcefully collapse the action view if not in search
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            if (!isSearchInProgress() && searchItem.isActionViewExpanded) {
+                searchItem.collapseActionView()
+            }
         }
 
         return super.onCreateOptionsMenu(menu)
