@@ -8,7 +8,7 @@ import com.github.libretube.helpers.NewPipeExtractorInstance
 import com.github.libretube.helpers.PlaylistCategoryScanner
 import com.github.libretube.helpers.PreferenceHelper
 import com.github.libretube.helpers.ProxyHelper
-import com.github.libretube.helpers.ShortcutHelper
+import androidx.core.content.pm.ShortcutManagerCompat
 import com.github.libretube.util.ExceptionHandler
 
 class LibreTubeApp : Application() {
@@ -62,10 +62,8 @@ class LibreTubeApp : Application() {
         val exceptionHandler = ExceptionHandler(defaultExceptionHandler)
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
 
-        /**
-         * Dynamically create App Shortcuts
-         */
-        ShortcutHelper.createShortcuts(this)
+        // Remove all dynamic app shortcuts
+        ShortcutManagerCompat.removeAllDynamicShortcuts(this)
 
         NewPipeExtractorInstance.init()
     }
