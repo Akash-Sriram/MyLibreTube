@@ -357,8 +357,8 @@ class NewPipeMediaServiceRepository : MediaServiceRepository {
             // currently, isShortFormContent always seems to return false
             isShort = resp.isShortFormContent || (resp.videoStreams + resp.videoOnlyStreams)
                 .firstOrNull()?.let { it.height > it.width } ?: false,
-            serverAbrStreamingUrl = resp.serverAbrStreamingUrl,
-            videoPlaybackUstreamerConfig = resp.ustreamerConfig,
+            serverAbrStreamingUrl = null,
+            videoPlaybackUstreamerConfig = null,
         )
     }
 
