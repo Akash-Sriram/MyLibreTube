@@ -16,7 +16,7 @@ data class JioSaavnOfficialMoreInfo(
 
 @Serializable
 data class JioSaavnOfficialSong(
-    val id: String,
+    val id: String = "",
     val title: String? = null,
     val name: String? = null,
     val image: String? = null,
@@ -36,7 +36,7 @@ data class JioSaavnOfficialSearchResponse(
 
 @Serializable
 data class JioSaavnOfficialAlbumItem(
-    val id: String,
+    val id: String = "",
     val title: String? = null,
     val name: String? = null,
     val image: String? = null,
@@ -54,7 +54,7 @@ data class JioSaavnOfficialSearchAlbumsResponse(
 
 @Serializable
 data class JioSaavnOfficialPlaylistItem(
-    val id: String,
+    val id: String = "",
     val title: String? = null,
     val name: String? = null,
     val image: String? = null,
@@ -71,7 +71,7 @@ data class JioSaavnOfficialSearchPlaylistsResponse(
 
 @Serializable
 data class JioSaavnOfficialArtistItem(
-    val id: String,
+    val id: String = "",
     val name: String? = null,
     val title: String? = null,
     val image: String? = null,
