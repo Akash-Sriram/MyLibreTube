@@ -162,7 +162,15 @@ object BackupHelper {
                     val sortedDesc = backupFiles.sortedByDescending { it.name.orEmpty() }
                     val toDelete = sortedDesc.drop(5)
                     for (file in toDelete) {
-                        file.delete()
+                        try {
+                            val deleted = android.provider.DocumentsContract.deleteDocument(context.contentResolver, file.uri)
+                            Log.d(TAG(), "Auto-backup SAF pruning: deleting ${file.name} -> result: $deleted")
+                        } catch (e: Exception) {
+                            Log.e(TAG(), "Auto-backup SAF pruning: failed to delete ${file.name}", e)
+                            // Fallback to standard delete if contract delete fails
+                            val deleted = file.delete()
+                            Log.d(TAG(), "Auto-backup SAF pruning fallback: deleting ${file.name} -> result: $deleted")
+                        }
                     }
                 }
             } else {
@@ -186,7 +194,8 @@ object BackupHelper {
                     val sortedDesc = backupFiles.sortedByDescending { it.name }
                     val toDelete = sortedDesc.drop(5)
                     for (f in toDelete) {
-                        f.delete()
+                        val deleted = f.delete()
+                        Log.d(TAG(), "Auto-backup internal pruning: deleting ${f.name} -> result: $deleted")
                     }
                 }
             }
