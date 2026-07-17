@@ -189,11 +189,14 @@ class JioSaavnMediaServiceRepository : MediaServiceRepository {
     override suspend fun getTrending(region: String, category: TrendingCategory): List<StreamItem> = emptyList()
 
     override suspend fun getStreams(videoId: String): Streams {
-        val cleanId = videoId.removePrefix("jsa_song_").substringBefore("_")
+        val fullId = videoId.removePrefix("jsa_song_")
+        val token = fullId.substringAfterLast("_", "")
+        val id = if (token.isNotEmpty() && fullId.contains("_")) fullId.substringBeforeLast("_") else fullId
+
         var response = try {
-            api.getSongDetails(pids = cleanId)
+            api.getSongDetails(pids = id)
         } catch (e: Exception) {
-            api.getSongDetailsByToken(token = cleanId)
+            api.getSongDetailsByToken(token = token.ifEmpty { id })
         }
         val song = response.values.firstOrNull() ?: throw Exception("Song not found")
         return song.toStreams()
