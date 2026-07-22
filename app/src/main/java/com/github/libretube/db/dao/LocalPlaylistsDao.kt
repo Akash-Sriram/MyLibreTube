@@ -16,6 +16,9 @@ interface LocalPlaylistsDao {
     @Query("SELECT * FROM LocalPlaylist")
     suspend fun getAll(): List<LocalPlaylistWithVideos>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM localPlaylistItem WHERE videoId = :videoId LIMIT 1)")
+    suspend fun isVideoInAnyPlaylist(videoId: String): Boolean
+
     @Insert
     suspend fun createPlaylist(playlist: LocalPlaylist): Long
 

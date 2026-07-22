@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import com.github.libretube.R
 import com.github.libretube.api.JsonHelper
@@ -128,7 +129,26 @@ class SearchResultsAdapter(
             }
             watchProgress.setWatchProgressLength(videoId, item.duration)
 
-            downloadBadge.isGone = true
+            val currentVideoId = videoId
+            root.tag = currentVideoId
+            val lifecycleOwner = root.context as? androidx.lifecycle.LifecycleOwner
+            if (lifecycleOwner != null) {
+                lifecycleOwner.lifecycleScope.launch {
+                    val isInPlaylist = withContext(Dispatchers.IO) {
+                        com.github.libretube.db.DatabaseHolder.Database.localPlaylistsDao().isVideoInAnyPlaylist(currentVideoId)
+                    }
+                    if (root.tag == currentVideoId) {
+                        if (isInPlaylist) {
+                            downloadBadge.setImageResource(R.drawable.ic_playlist)
+                            downloadBadge.isVisible = true
+                        } else {
+                            downloadBadge.isGone = true
+                        }
+                    }
+                }
+            } else {
+                downloadBadge.isGone = true
+            }
         }
     }
 

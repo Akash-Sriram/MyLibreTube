@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ListAdapter
 import com.github.libretube.api.obj.StreamItem
 import com.github.libretube.constants.IntentData
@@ -20,6 +21,9 @@ import com.github.libretube.ui.sheets.VideoOptionsBottomSheet
 import com.github.libretube.ui.sheets.VideoOptionsBottomSheet.Companion.VIDEO_OPTIONS_SHEET_REQUEST_KEY
 import com.github.libretube.ui.viewholders.PlaylistViewHolder
 import com.github.libretube.util.TextUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class PlaylistItem(
     val item: StreamItem,
@@ -91,7 +95,26 @@ class PlaylistAdapter(
 
             streamItem.duration?.let { watchProgress.setWatchProgressLength(videoId, it) }
 
-            downloadBadge.isGone = true
+            val currentVideoId = videoId
+            root.tag = currentVideoId
+            val lifecycleOwner = root.context as? androidx.lifecycle.LifecycleOwner
+            if (lifecycleOwner != null) {
+                lifecycleOwner.lifecycleScope.launch {
+                    val isInPlaylist = withContext(Dispatchers.IO) {
+                        com.github.libretube.db.DatabaseHolder.Database.localPlaylistsDao().isVideoInAnyPlaylist(currentVideoId)
+                    }
+                    if (root.tag == currentVideoId) {
+                        if (isInPlaylist) {
+                            downloadBadge.setImageResource(com.github.libretube.R.drawable.ic_playlist)
+                            downloadBadge.isVisible = true
+                        } else {
+                            downloadBadge.isGone = true
+                        }
+                    }
+                }
+            } else {
+                downloadBadge.isGone = true
+            }
         }
     }
 }
