@@ -41,7 +41,7 @@ object UpdateHelper {
                     return@launch
                 }
 
-                val jsonStr = response.body?.string() ?: ""
+                val jsonStr = response.body.string()
                 val json = JSONObject(jsonStr)
                 val tagName = json.getString("tag_name")
                 val assets = json.getJSONArray("assets")
@@ -75,65 +75,133 @@ object UpdateHelper {
 
     private fun startDownload(context: Context, url: String, tagName: String) {
         val apkFileName = "MyLibreTube-$tagName.apk"
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle("MyLibreTube Update")
-            .setDescription("Downloading $tagName...")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, apkFileName)
-            .setMimeType("application/vnd.android.package-archive")
-
-        val downloadId = downloadManager.enqueue(request)
-
-        val onPackageReplaced = object : BroadcastReceiver() {
-            override fun onReceive(ctxt: Context, intent: Intent) {
-                deleteApkFile(apkFileName)
-                downloadManager.remove(downloadId)
-                try { ctxt.unregisterReceiver(this) } catch (e: Exception) {}
-            }
+        val updatesDir = context.cacheDir.resolve("updates")
+        if (!updatesDir.exists()) {
+            updatesDir.mkdirs()
         }
-        ContextCompat.registerReceiver(
-            context,
-            onPackageReplaced,
-            IntentFilter(Intent.ACTION_MY_PACKAGE_REPLACED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        val apkFile = updatesDir.resolve(apkFileName)
 
-        val onComplete = object : BroadcastReceiver() {
-            override fun onReceive(ctxt: Context, intent: Intent) {
-                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                if (id == downloadId) {
-                    try {
-                        val uri = downloadManager.getUriForDownloadedFile(downloadId)
-                        if (uri != null) {
-                            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                                setDataAndType(uri, "application/vnd.android.package-archive")
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        val notificationId = 1001
+        val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
+        val channelId = com.github.libretube.LibreTubeApp.DOWNLOAD_CHANNEL_NAME
+
+        val notificationBuilder = androidx.core.app.NotificationCompat.Builder(context, channelId)
+            .setContentTitle("Downloading Update")
+            .setContentText("MyLibreTube $tagName")
+            .setSmallIcon(com.github.libretube.R.drawable.ic_download)
+            .setOngoing(true)
+            .setProgress(100, 0, true)
+
+        try {
+            if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationManager.notify(notificationId, notificationBuilder.build())
+            }
+        } catch (e: SecurityException) {
+            // Permission not granted on 13+
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val request = okhttp3.Request.Builder().url(url).build()
+                val response = RetrofitInstance.httpClient.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    throw java.io.IOException("Failed to download file: $response")
+                }
+
+                val body = response.body
+                val contentLength = body.contentLength()
+                val inputStream = body.byteStream()
+                val outputStream = apkFile.outputStream()
+
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                var totalBytesRead = 0L
+                var lastProgressUpdate = 0L
+
+                outputStream.use { out ->
+                    inputStream.use { inp ->
+                        while (inp.read(buffer).also { bytesRead = it } != -1) {
+                            out.write(buffer, 0, bytesRead)
+                            totalBytesRead += bytesRead
+                            if (contentLength > 0) {
+                                val progress = ((totalBytesRead * 100) / contentLength).toInt()
+                                val currentTime = System.currentTimeMillis()
+                                if (currentTime - lastProgressUpdate > 500) { // Update notification every 500ms
+                                    lastProgressUpdate = currentTime
+                                    notificationBuilder.setProgress(100, progress, false)
+                                    if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        notificationManager.notify(notificationId, notificationBuilder.build())
+                                    }
+                                }
                             }
-                            ctxt.startActivity(installIntent)
                         }
+                    }
+                }
+
+                // Download completed, update notification and launch installer
+                notificationBuilder
+                    .setContentTitle("Download Complete")
+                    .setContentText("Click to install MyLibreTube $tagName")
+                    .setProgress(0, 0, false)
+                    .setOngoing(false)
+
+                val authority = "${context.packageName}.provider"
+                val uri = androidx.core.content.FileProvider.getUriForFile(context, authority, apkFile)
+
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                }
+
+                val pendingIntent = android.app.PendingIntent.getActivity(
+                    context,
+                    0,
+                    installIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+
+                notificationBuilder.setContentIntent(pendingIntent)
+                if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    notificationManager.notify(notificationId, notificationBuilder.build())
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Update downloaded. Installing...", Toast.LENGTH_LONG).show()
+                    try {
+                        context.startActivity(installIntent)
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        Toast.makeText(context, "Failed to launch installer: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                     }
-                    try { ctxt.unregisterReceiver(this) } catch (e: Exception) {}
+                }
+
+                // Clean up old cached apks
+                cleanUpOldApks(context)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                notificationManager.cancel(notificationId)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Download failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
             }
         }
-        
-        ContextCompat.registerReceiver(
-            context,
-            onComplete,
-            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-            ContextCompat.RECEIVER_EXPORTED
-        )
     }
 
-    private fun deleteApkFile(fileName: String) {
+    private fun deleteApkFile(context: Context, fileName: String) {
         try {
-            val file = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                fileName
-            )
+            val file = context.cacheDir.resolve("updates").resolve(fileName)
             if (file.exists()) file.delete()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -143,9 +211,16 @@ object UpdateHelper {
     fun cleanUpOldApks(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Clean public downloads directory (legacy)
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val files = downloadsDir.listFiles()
-                files?.forEach { file ->
+                downloadsDir.listFiles()?.forEach { file ->
+                    if (file.name.startsWith("MyLibreTube-") && file.name.endsWith(".apk")) {
+                        file.delete()
+                    }
+                }
+                // Clean private cache updates directory
+                val updatesDir = context.cacheDir.resolve("updates")
+                updatesDir.listFiles()?.forEach { file ->
                     if (file.name.startsWith("MyLibreTube-") && file.name.endsWith(".apk")) {
                         file.delete()
                     }

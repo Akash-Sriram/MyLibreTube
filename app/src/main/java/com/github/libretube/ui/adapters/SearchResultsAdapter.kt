@@ -138,8 +138,10 @@ class SearchResultsAdapter(
                 if (root.tag == currentVideoId) {
                     if (isInPlaylist) {
                         downloadBadge.setImageResource(R.drawable.ic_playlist)
+                        downloadBadge.setColorFilter(com.github.libretube.helpers.ThemeHelper.getThemeColor(activity, androidx.appcompat.R.attr.colorPrimary))
                         downloadBadge.isVisible = true
                     } else {
+                        downloadBadge.clearColorFilter()
                         downloadBadge.isGone = true
                     }
                 }
