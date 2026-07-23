@@ -131,23 +131,18 @@ class SearchResultsAdapter(
 
             val currentVideoId = videoId
             root.tag = currentVideoId
-            val lifecycleOwner = root.context as? androidx.lifecycle.LifecycleOwner
-            if (lifecycleOwner != null) {
-                lifecycleOwner.lifecycleScope.launch {
-                    val isInPlaylist = withContext(Dispatchers.IO) {
-                        com.github.libretube.db.DatabaseHolder.Database.localPlaylistsDao().isVideoInAnyPlaylist(currentVideoId)
-                    }
-                    if (root.tag == currentVideoId) {
-                        if (isInPlaylist) {
-                            downloadBadge.setImageResource(R.drawable.ic_playlist)
-                            downloadBadge.isVisible = true
-                        } else {
-                            downloadBadge.isGone = true
-                        }
+            activity.lifecycleScope.launch {
+                val isInPlaylist = withContext(Dispatchers.IO) {
+                    com.github.libretube.db.DatabaseHolder.Database.localPlaylistsDao().isVideoInAnyPlaylist(currentVideoId)
+                }
+                if (root.tag == currentVideoId) {
+                    if (isInPlaylist) {
+                        downloadBadge.setImageResource(R.drawable.ic_playlist)
+                        downloadBadge.isVisible = true
+                    } else {
+                        downloadBadge.isGone = true
                     }
                 }
-            } else {
-                downloadBadge.isGone = true
             }
         }
     }
