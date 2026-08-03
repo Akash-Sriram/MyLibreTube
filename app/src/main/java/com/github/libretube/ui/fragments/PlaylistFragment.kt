@@ -165,7 +165,7 @@ class PlaylistFragment : DynamicLayoutManagerFragment(R.layout.fragment_playlist
             // hide playlist description text view if not provided
             binding.playlistDescription.isGone = response.description.orEmpty().isBlank()
 
-            playlistAdapter = PlaylistAdapter(playlistId) { streamItem ->
+            playlistAdapter = PlaylistAdapter(playlistId, playlistType == PlaylistType.LOCAL) { streamItem ->
                 startVideoItemPlayback(streamItem)
             }
             binding.playlistRecView.adapter = playlistAdapter
