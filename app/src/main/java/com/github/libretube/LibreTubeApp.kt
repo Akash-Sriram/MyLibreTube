@@ -66,6 +66,7 @@ class LibreTubeApp : Application() {
         ShortcutManagerCompat.removeAllDynamicShortcuts(this)
 
         NewPipeExtractorInstance.init()
+        com.github.libretube.helpers.WifiSyncHelper.start(applicationContext)
     }
 
     /**

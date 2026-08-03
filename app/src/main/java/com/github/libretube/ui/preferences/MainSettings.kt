@@ -49,22 +49,38 @@ class MainSettings : BasePreferenceFragment() {
                             com.github.libretube.api.JsonHelper.json.encodeToStream(file, outputStream)
                         }
 
-                        // Prune manual backups to keep last 5
-                        var backupFiles = folder.listFiles().filter { f ->
-                            val name = f.name.orEmpty()
-                            name.startsWith("libretube-backup-") && !name.startsWith("libretube-auto-backup-")
-                        }
-                        if (backupFiles.none { it.uri == documentFile.uri }) {
-                            backupFiles = backupFiles + documentFile
-                        }
-                        if (backupFiles.size > 5) {
-                            val sortedDesc = backupFiles.sortedByDescending { it.name.orEmpty() }
-                            val toDelete = sortedDesc.drop(5)
-                            var deletedCount = 0
-                            for (file in toDelete) {
-                                if (file.delete()) deletedCount++
+                        // Prune manual backups to keep last 5 using tracked URIs to avoid folder.listFiles()
+                        val trackedList = PreferenceHelper.getString(PreferenceKeys.MANUAL_BACKUP_HISTORY, "")
+                            .split(",")
+                            .filter { it.isNotEmpty() }
+                            .toMutableList()
+
+                        trackedList.add(documentFile.uri.toString())
+
+                        var deletedCount = 0
+                        if (trackedList.size > 5) {
+                            val toDelete = trackedList.take(trackedList.size - 5)
+                            for (uriStr in toDelete) {
+                                try {
+                                    if (android.provider.DocumentsContract.deleteDocument(requireContext().contentResolver, Uri.parse(uriStr))) {
+                                        deletedCount++
+                                    }
+                                } catch (e: Exception) {
+                                    try {
+                                        val fDoc = androidx.documentfile.provider.DocumentFile.fromSingleUri(requireContext(), Uri.parse(uriStr))
+                                        if (fDoc != null && fDoc.delete()) {
+                                            deletedCount++
+                                        }
+                                    } catch (e2: Exception) {
+                                        // Ignore
+                                    }
+                                }
                             }
+                            val keptList = trackedList.drop(trackedList.size - 5)
+                            PreferenceHelper.putString(PreferenceKeys.MANUAL_BACKUP_HISTORY, keptList.joinToString(","))
                             requireContext().toastFromMainDispatcher("Kept 5 backups, deleted $deletedCount old backups")
+                        } else {
+                            PreferenceHelper.putString(PreferenceKeys.MANUAL_BACKUP_HISTORY, trackedList.joinToString(","))
                         }
 
                         requireContext().toastFromMainDispatcher(R.string.backup_created_success_folder)

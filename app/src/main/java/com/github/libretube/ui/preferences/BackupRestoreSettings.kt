@@ -135,6 +135,18 @@ class BackupRestoreSettings : BasePreferenceFragment() {
     override fun onResume() {
         super.onResume()
         updateBackupFolderSummary()
+        updateWifiSyncStatus()
+    }
+
+    private fun updateWifiSyncStatus() {
+        val wifiSyncPref = findPreference<Preference>("wifi_sync_status") ?: return
+        if (com.github.libretube.helpers.WifiSyncHelper.isRunningStatus) {
+            wifiSyncPref.title = "Server Running"
+            wifiSyncPref.summary = com.github.libretube.helpers.WifiSyncHelper.getServerAddress()
+        } else {
+            wifiSyncPref.title = "Server Stopped"
+            wifiSyncPref.summary = "Wi-Fi is not connected or sync is inactive"
+        }
     }
 
     private fun updateBackupFolderSummary() {

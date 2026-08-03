@@ -525,11 +525,55 @@ class PlaylistFragment : DynamicLayoutManagerFragment(R.layout.fragment_playlist
         }
     }
 
+    private fun formatDetailedDuration(totalSeconds: Long): String {
+        if (totalSeconds <= 0) return "0 seconds"
+        
+        var remaining = totalSeconds
+        val years = remaining / 31536000
+        remaining %= 31536000
+        
+        val months = remaining / 2592000
+        remaining %= 2592000
+        
+        val weeks = remaining / 604800
+        remaining %= 604800
+        
+        val days = remaining / 86400
+        remaining %= 86400
+        
+        val hours = remaining / 3600
+        remaining %= 3600
+        
+        val minutes = remaining / 60
+        remaining %= 60
+        
+        val seconds = remaining
+        
+        val parts = mutableListOf<String>()
+        if (years > 0) parts.add("$years ${if (years == 1L) "year" else "years"}")
+        if (months > 0) parts.add("$months ${if (months == 1L) "month" else "months"}")
+        if (weeks > 0) parts.add("$weeks ${if (weeks == 1L) "week" else "weeks"}")
+        if (days > 0) parts.add("$days ${if (days == 1L) "day" else "days"}")
+        if (hours > 0) parts.add("$hours ${if (hours == 1L) "hour" else "hours"}")
+        if (minutes > 0) parts.add("$minutes ${if (minutes == 1L) "minute" else "minutes"}")
+        if (seconds > 0) parts.add("$seconds ${if (seconds == 1L) "second" else "seconds"}")
+        
+        return when (parts.size) {
+            0 -> "0 seconds"
+            1 -> parts[0]
+            2 -> "${parts[0]} and ${parts[1]}"
+            else -> {
+                val first = parts.subList(0, parts.size - 1).joinToString(", ")
+                "$first, and ${parts.last()}"
+            }
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     private fun updatePlaylistDuration(updatedList: List<PlaylistItem>) {
         val totalDuration = updatedList.sumOf { it.item.duration ?: 0 }
-        binding.playlistDuration.text = DateUtils.formatElapsedTime(totalDuration) +
-                if (nextPage != null) "+" else ""
+        binding.playlistDuration.text = formatDetailedDuration(totalDuration) +
+                if (nextPage != null) " +" else ""
     }
 
     // Update the Cover/Thumbnail of the playlist if the first video was removed

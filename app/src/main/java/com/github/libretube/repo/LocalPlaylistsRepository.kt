@@ -17,10 +17,12 @@ class LocalPlaylistsRepository: PlaylistRepository {
         val relation = DatabaseHolder.Database.localPlaylistsDao().getAll()
             .first { it.playlist.id.toString() == playlistId }
 
+        val lastVideoThumbnail = relation.videos.lastOrNull()?.thumbnailUrl
+
         return Playlist(
             name = relation.playlist.name,
             description = relation.playlist.description,
-            thumbnailUrl = relation.playlist.thumbnailUrl,
+            thumbnailUrl = lastVideoThumbnail ?: relation.playlist.thumbnailUrl,
             videos = relation.videos.size,
             relatedStreams = relation.videos.map { it.toStreamItem() }
         )
@@ -29,11 +31,12 @@ class LocalPlaylistsRepository: PlaylistRepository {
     override suspend fun getPlaylists(): List<Playlists> {
         return DatabaseHolder.Database.localPlaylistsDao().getAll()
             .map {
+                val lastVideoThumbnail = it.videos.lastOrNull()?.thumbnailUrl
                 Playlists(
                     id = it.playlist.id.toString(),
                     name = it.playlist.name,
                     shortDescription = it.playlist.description,
-                    thumbnail = it.playlist.thumbnailUrl,
+                    thumbnail = lastVideoThumbnail ?: it.playlist.thumbnailUrl,
                     videos = it.videos.size.toLong()
                 )
             }

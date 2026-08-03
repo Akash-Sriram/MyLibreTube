@@ -148,29 +148,38 @@ object BackupHelper {
                     context.contentResolver.openOutputStream(documentFile.uri)?.use { outputStream ->
                         JsonHelper.json.encodeToStream(backupFile, outputStream)
                     }
-                }
 
-                // Prune to keep last 5 in this folder
-                var backupFiles = folder.listFiles().filter { f ->
-                    val name = f.name.orEmpty()
-                    name.startsWith("libretube-auto-backup-")
-                }
-                if (documentFile != null && backupFiles.none { it.uri == documentFile.uri }) {
-                    backupFiles = backupFiles + documentFile
-                }
-                if (backupFiles.size > 5) {
-                    val sortedDesc = backupFiles.sortedByDescending { it.name.orEmpty() }
-                    val toDelete = sortedDesc.drop(5)
-                    for (file in toDelete) {
-                        try {
-                            val deleted = android.provider.DocumentsContract.deleteDocument(context.contentResolver, file.uri)
-                            Log.d(TAG(), "Auto-backup SAF pruning: deleting ${file.name} -> result: $deleted")
-                        } catch (e: Exception) {
-                            Log.e(TAG(), "Auto-backup SAF pruning: failed to delete ${file.name}", e)
-                            // Fallback to standard delete if contract delete fails
-                            val deleted = file.delete()
-                            Log.d(TAG(), "Auto-backup SAF pruning fallback: deleting ${file.name} -> result: $deleted")
+                    // Prune to keep last 5 in this folder using tracked URIs to avoid folder.listFiles()
+                    val trackedList = PreferenceHelper.getString(PreferenceKeys.AUTO_BACKUP_HISTORY, "")
+                        .split(",")
+                        .filter { it.isNotEmpty() }
+                        .toMutableList()
+
+                    trackedList.add(documentFile.uri.toString())
+
+                    if (trackedList.size > 5) {
+                        val toDelete = trackedList.take(trackedList.size - 5)
+                        for (uriStr in toDelete) {
+                            try {
+                                val deleted = android.provider.DocumentsContract.deleteDocument(context.contentResolver, Uri.parse(uriStr))
+                                Log.d(TAG(), "Auto-backup SAF pruning: deleting $uriStr -> result: $deleted")
+                            } catch (e: Exception) {
+                                Log.e(TAG(), "Auto-backup SAF pruning: failed to delete $uriStr", e)
+                                try {
+                                    val fDoc = DocumentFile.fromSingleUri(context, Uri.parse(uriStr))
+                                    if (fDoc != null) {
+                                        val deleted = fDoc.delete()
+                                        Log.d(TAG(), "Auto-backup SAF pruning fallback: deleting $uriStr -> result: $deleted")
+                                    }
+                                } catch (e2: Exception) {
+                                    Log.e(TAG(), "Auto-backup SAF pruning fallback: failed to delete $uriStr", e2)
+                                }
+                            }
                         }
+                        val keptList = trackedList.drop(trackedList.size - 5)
+                        PreferenceHelper.putString(PreferenceKeys.AUTO_BACKUP_HISTORY, keptList.joinToString(","))
+                    } else {
+                        PreferenceHelper.putString(PreferenceKeys.AUTO_BACKUP_HISTORY, trackedList.joinToString(","))
                     }
                 }
             } else {

@@ -127,6 +127,8 @@ object PreferenceKeys {
     const val LOCAL_STREAM_EXTRACTION = "local_stream_extraction"
     const val INCLUDE_TIMESTAMP_IN_BACKUP_FILENAME = "include_timestamp_in_filename"
     const val BACKUP_FOLDER_URI = "backup_folder_uri"
+    const val AUTO_BACKUP_HISTORY = "auto_backup_history"
+    const val MANUAL_BACKUP_HISTORY = "manual_backup_history"
 
     // History
     const val WATCH_HISTORY_SIZE = "watch_history_size"

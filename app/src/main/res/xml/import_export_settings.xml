@@ -34,5 +34,13 @@
 
 
     </PreferenceCategory>
+    
+    <PreferenceCategory app:title="Wi-Fi Sync">
+        <Preference
+            android:icon="@drawable/ic_device"
+            app:key="wifi_sync_status"
+            app:title="Server Status"
+            app:summary="Stopped" />
+    </PreferenceCategory>
 
 </PreferenceScreen>
