@@ -79,6 +79,12 @@ object UpdateHelper {
         if (!updatesDir.exists()) {
             updatesDir.mkdirs()
         }
+
+        // Delete any stale APKs BEFORE downloading the new one.
+        // Do NOT call cleanUpOldApks() after the install intent is fired — that
+        // creates a race condition where the installer reads a deleted file.
+        updatesDir.listFiles()?.forEach { it.delete() }
+
         val apkFile = updatesDir.resolve(apkFileName)
 
         val notificationId = 1001
@@ -178,17 +184,27 @@ object UpdateHelper {
                 }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Update downloaded. Installing...", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Update downloaded. Tap to install...", Toast.LENGTH_LONG).show()
                     try {
                         context.startActivity(installIntent)
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        Toast.makeText(context, "Failed to launch installer: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        // Fallback: open GitHub releases page so user can install manually
+                        // (e.g. signature mismatch between debug and release builds)
+                        try {
+                            val browserIntent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/Akash-Sriram/MyLibreTube/releases/latest")
+                            ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                            context.startActivity(browserIntent)
+                        } catch (ex: Exception) {
+                            Toast.makeText(context, "Install failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
 
-                // Clean up old cached apks
-                cleanUpOldApks(context)
+                // NOTE: do NOT clean up here — let MainActivity.cleanUpOldApks() handle
+                // it on next launch, after the installer has finished reading the file.
             } catch (e: Exception) {
                 e.printStackTrace()
                 notificationManager.cancel(notificationId)
