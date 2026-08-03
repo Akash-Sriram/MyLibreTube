@@ -73,8 +73,10 @@ class PlaylistsAdapter(
                     }
 
                     if (isPlaylistToBeDeleted) {
-                        // try to refresh the playlists in the library on deletion success
-                        onDelete(position)
+                        // Remove by ID, not by position — the captured `position` from
+                        // onBindViewHolder is stale by the time this callback fires if
+                        // another playlist was already deleted (causes IndexOutOfBoundsException).
+                        submitList(currentList.filter { it.id != playlist.id })
                     }
                 }
 
@@ -93,10 +95,4 @@ class PlaylistsAdapter(
         }
     }
 
-    private fun onDelete(position: Int) {
-        val newList = currentList.toMutableList().also {
-            it.removeAt(position)
-        }
-        submitList(newList)
-    }
 }
