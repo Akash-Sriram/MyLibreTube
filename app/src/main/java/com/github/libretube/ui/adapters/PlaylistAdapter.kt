@@ -111,7 +111,7 @@ class PlaylistAdapter(
                     }
                     if (root.tag == currentVideoId) {
                         if (isInPlaylist) {
-                            downloadBadge.setImageResource(com.github.libretube.R.drawable.ic_done)
+                            downloadBadge.setImageResource(com.github.libretube.R.drawable.ic_bookmark)
                             downloadBadge.setColorFilter(
                                 com.github.libretube.helpers.ThemeHelper.getThemeColor(
                                     activity, androidx.appcompat.R.attr.colorPrimary
