@@ -21,7 +21,9 @@ data class LocalPlaylistItem(
     @ColumnInfo val duration: Long? = null,
     // Cached from stream info — null means not yet scanned
     @ColumnInfo val category: String? = null,
-    @ColumnInfo val hasVideoStreams: Boolean? = null
+    @ColumnInfo val hasVideoStreams: Boolean? = null,
+    // Cached album name for local playlist search
+    @ColumnInfo val albumName: String? = null
 ) {
     fun toStreamItem(): StreamItem {
         return StreamItem(
@@ -32,7 +34,8 @@ data class LocalPlaylistItem(
             uploaderUrl = uploaderUrl,
             uploaderAvatar = uploaderAvatar,
             uploadedDate = uploadDate,
-            duration = duration
+            duration = duration,
+            albumName = albumName
         )
     }
 }

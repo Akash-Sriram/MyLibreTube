@@ -21,7 +21,7 @@ import com.github.libretube.db.obj.WatchHistoryItem
         LocalPlaylist::class,
         LocalPlaylistItem::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

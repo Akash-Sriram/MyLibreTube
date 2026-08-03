@@ -381,7 +381,8 @@ class PlaylistFragment : DynamicLayoutManagerFragment(R.layout.fragment_playlist
         if (!query.isNullOrEmpty()) {
             videos = videos.filter { 
                 it.item.title.orEmpty().contains(query, ignoreCase = true) ||
-                it.item.uploaderName.orEmpty().contains(query, ignoreCase = true)
+                it.item.uploaderName.orEmpty().contains(query, ignoreCase = true) ||
+                it.item.albumName.orEmpty().contains(query, ignoreCase = true)
             }
         }
 

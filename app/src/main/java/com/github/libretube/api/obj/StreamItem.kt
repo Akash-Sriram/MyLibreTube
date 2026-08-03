@@ -25,7 +25,8 @@ data class StreamItem(
     val uploaderVerified: Boolean? = null,
     val uploaded: Long = 0,
     val shortDescription: String? = null,
-    val isShort: Boolean = false
+    val isShort: Boolean = false,
+    val albumName: String? = null
 ) : Parcelable {
     val isLive get() = !isShort && ((duration == null) || (duration <= 0L))
     val isUpcoming get() = uploaded > System.currentTimeMillis()
@@ -40,7 +41,8 @@ data class StreamItem(
             uploaderUrl = uploaderUrl,
             uploaderAvatar = uploaderAvatar?.let { ProxyHelper.unwrapUrl(it) },
             uploadDate = uploadedDate,
-            duration = duration
+            duration = duration,
+            albumName = albumName
         )
     }
 

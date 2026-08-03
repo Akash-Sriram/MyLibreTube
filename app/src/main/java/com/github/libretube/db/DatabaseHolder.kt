@@ -95,7 +95,12 @@ object DatabaseHolder {
     private val MIGRATION_25_26 = object : Migration(25, 26) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `customInstance`")
-            db.execSQL("DROP TABLE IF EXISTS `watchPosition`")
+        }
+    }
+
+    private val MIGRATION_26_27 = object : Migration(26, 27) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE 'localPlaylistItem' ADD COLUMN 'albumName' TEXT DEFAULT NULL")
         }
     }
 
@@ -112,6 +117,7 @@ object DatabaseHolder {
                 MIGRATION_22_23,
                 MIGRATION_24_25,
                 MIGRATION_25_26,
+                MIGRATION_26_27,
             )
             .fallbackToDestructiveMigration()
             .build()

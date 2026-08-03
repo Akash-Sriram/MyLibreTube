@@ -67,6 +67,23 @@ class LibreTubeApp : Application() {
 
         NewPipeExtractorInstance.init()
         com.github.libretube.helpers.WifiSyncHelper.start(applicationContext)
+
+        // Schedule periodic background sync for album metadata (runs once a day)
+        val albumWorkRequest = androidx.work.PeriodicWorkRequestBuilder<com.github.libretube.workers.AlbumMetadataWorker>(
+            1, java.util.concurrent.TimeUnit.DAYS
+        ).setConstraints(
+            androidx.work.Constraints.Builder()
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .build()
+        ).build()
+        androidx.work.WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            com.github.libretube.workers.AlbumMetadataWorker.WORK_NAME,
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            albumWorkRequest
+        )
+        // One-time request for immediate testing and logging
+        val oneTimeRequest = androidx.work.OneTimeWorkRequestBuilder<com.github.libretube.workers.AlbumMetadataWorker>().build()
+        androidx.work.WorkManager.getInstance(applicationContext).enqueue(oneTimeRequest)
     }
 
     /**
